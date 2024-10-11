@@ -1,4 +1,4 @@
-package com.example.apptentzo_android.ui.RouteDetails
+package com.example.apptentzo_android.ui.Map
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -145,7 +145,8 @@ fun RouteDetails() {
                         Text(
                             text = "Iniciar Ruta",
                             fontWeight = FontWeight.Bold,
-                            )
+                            fontSize = 25.sp
+                        )
                     }
                 }
             }
