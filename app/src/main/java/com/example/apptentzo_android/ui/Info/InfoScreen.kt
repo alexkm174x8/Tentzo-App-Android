@@ -53,7 +53,7 @@ class RouteActivity : ComponentActivity() {
 @Composable
 fun InfoScreen() {
 
-    val actividades = listOf("Cenas con Arte", "Taller de barro", "Taller de plantas", "Fani prom")
+    val actividades = listOf("Cenas con Arte", "Taller de barro")
 
     Column(
         modifier = Modifier
