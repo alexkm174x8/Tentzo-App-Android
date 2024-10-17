@@ -3,8 +3,16 @@ package com.example.apptentzo_android
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.requiredWidth
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -17,11 +25,18 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusModifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.example.apptentzo_android.ui.Camera.CameraScreen
 import com.example.apptentzo_android.ui.Map.MapScreen
 import com.example.apptentzo_android.ui.Menu.HomeScreen
@@ -55,73 +70,118 @@ fun MainScreen() {
 
 @Composable
 fun BottomNavigationBar(navController: NavHostController, selectedScreen: String, onScreenSelected: (String) -> Unit) {
-    NavigationBar {
-        NavigationBarItem(
-            label = { Text("Menu") },
-            selected = selectedScreen == "menu_screen",
-            onClick = {
-                if (selectedScreen != "menu_screen") { // Solo navega si no está en la pantalla seleccionada
-                    navController.navigate("menu_screen") {
-                        popUpTo("menu_screen") { inclusive = true } // Evitar apilar
+
+    NavigationBar(modifier = Modifier.focusModifier()
+            .requiredWidth(width = 414.dp)
+            .requiredHeight(height = 63.dp)
+        .offset(x= 9.dp, y = -30.dp)
+            .clip(shape = RoundedCornerShape(15.dp))
+            .background(color = Color.White)
+            .border(border = BorderStroke(1.dp, Color(0xffb6b6b6)),
+                shape = RoundedCornerShape(15.dp)))
+        {
+
+            NavigationBarItem(
+                selected = selectedScreen == "menu_screen",
+                onClick = {
+                    if (selectedScreen != "menu_screen") { // Solo navega si no está en la pantalla seleccionada
+                        navController.navigate("menu_screen") {
+                            popUpTo("menu_screen") { inclusive = true } // Evitar apilar
+                        }
+                        onScreenSelected("menu_screen")
                     }
-                    onScreenSelected("menu_screen")
+                },
+                icon = {
+                    Image(
+                        painter = painterResource(id = R.drawable.casaicon),
+                        contentDescription = "Menu Icon",
+                        modifier = Modifier
+                            .requiredWidth(30.dp)
+                            .requiredHeight(30.dp)
+                    )
                 }
-            },
-            icon = { Icon(Icons.Default.Home, contentDescription = "Menu Icon") }
-        )
-        NavigationBarItem(
-            label = { Text("Library") },
-            selected = selectedScreen == "library_screen",
-            onClick = {
-                if (selectedScreen != "library_screen") {
-                    navController.navigate("library_screen") {
-                        popUpTo("library_screen") { inclusive = true }
+            )
+            NavigationBarItem(
+                selected = selectedScreen == "library_screen",
+                onClick = {
+                    if (selectedScreen != "library_screen") {
+                        navController.navigate("library_screen") {
+                            popUpTo("library_screen") { inclusive = true }
+                        }
+                        onScreenSelected("library_screen")
                     }
-                    onScreenSelected("library_screen")
+                },
+                icon = {
+                    Image(
+                        painter = painterResource(id = R.drawable.planticon),
+                        contentDescription = "Menu Icon",
+                        modifier = Modifier
+                            .requiredWidth(30.dp)
+                            .requiredHeight(30.dp)
+                    )
                 }
-            },
-            icon = { Icon(Icons.Filled.Favorite, contentDescription = "Plant Icon") }
-        )
-        NavigationBarItem(
-            label = { Text("Camera") },
-            selected = selectedScreen == "camera_screen",
-            onClick = {
-                if (selectedScreen != "camera_screen") {
-                    navController.navigate("camera_screen") {
-                        popUpTo("camera_screen") { inclusive = true }
+            )
+            NavigationBarItem(
+                selected = selectedScreen == "camera_screen",
+                onClick = {
+                    if (selectedScreen != "camera_screen") {
+                        navController.navigate("camera_screen") {
+                            popUpTo("camera_screen") { inclusive = true }
+                        }
+                        onScreenSelected("camera_screen")
                     }
-                    onScreenSelected("camera_screen")
+                },
+                icon = {
+                    Image(
+                        painter = painterResource(id = R.drawable.camaraicon),
+                        contentDescription = "Menu Icon",
+                        modifier = Modifier
+                            .requiredWidth(30.dp)
+                            .requiredHeight(30.dp)
+                    )
                 }
-            },
-            icon = { Icon(Icons.Default.Favorite, contentDescription = "Camera Icon") }
-        )
-        NavigationBarItem(
-            label = { Text("Map") },
-            selected = selectedScreen == "map_screen",
-            onClick = {
-                if (selectedScreen != "map_screen") {
-                    navController.navigate("map_screen") {
-                        popUpTo("map_screen") { inclusive = true }
+            )
+            NavigationBarItem(
+                selected = selectedScreen == "map_screen",
+                onClick = {
+                    if (selectedScreen != "map_screen") {
+                        navController.navigate("map_screen") {
+                            popUpTo("map_screen") { inclusive = true }
+                        }
+                        onScreenSelected("map_screen")
                     }
-                    onScreenSelected("map_screen")
+                },
+                icon = {
+                    Image(
+                        painter = painterResource(id = R.drawable.mapaicon),
+                        contentDescription = "Menu Icon",
+                        modifier = Modifier
+                            .requiredWidth(30.dp)
+                            .requiredHeight(30.dp)
+                    )
                 }
-            },
-            icon = { Icon(Icons.Default.Favorite, contentDescription = "Map Icon") }
-        )
-        NavigationBarItem(
-            label = { Text("Info") },
-            selected = selectedScreen == "info_screen",
-            onClick = {
-                if (selectedScreen != "info_screen") {
-                    navController.navigate("info_screen") {
-                        popUpTo("info_screen") { inclusive = true }
+            )
+            NavigationBarItem(
+                selected = selectedScreen == "info_screen",
+                onClick = {
+                    if (selectedScreen != "info_screen") {
+                        navController.navigate("info_screen") {
+                            popUpTo("info_screen") { inclusive = true }
+                        }
+                        onScreenSelected("info_screen")
                     }
-                    onScreenSelected("info_screen")
+                },
+                icon = {
+                    Image(
+                        painter = painterResource(id = R.drawable.infoicon),
+                        contentDescription = "Menu Icon",
+                        modifier = Modifier
+                            .requiredWidth(30.dp)
+                            .requiredHeight(30.dp)
+                    )
                 }
-            },
-            icon = { Icon(Icons.Default.Info, contentDescription = "Info Icon") }
-        )
-    }
+            )
+        }
 }
 
 @Composable

@@ -15,10 +15,15 @@ import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,6 +43,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlantBank(navController: NavHostController) {
 
@@ -82,11 +88,7 @@ fun PlantBank(navController: NavHostController) {
                     border = BorderStroke(1.dp, Color(0xffd9d9d9)),
                     shape = RoundedCornerShape(9999.dp)
                 )
-                .padding(
-                    horizontal = 16.dp,
-                    vertical = 12.dp
-                )
-
+                .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
             TextField(
                 value = text,
@@ -94,9 +96,14 @@ fun PlantBank(navController: NavHostController) {
                     text = newText
                 },
                 modifier = Modifier
-                    .wrapContentHeight(align = Alignment.CenterVertically)
+                    .wrapContentHeight(align = Alignment.CenterVertically),
+                placeholder = {
+                    Text(text = "Buscar...", color = Color.Gray)
+                },
+                singleLine = true
             )
         }
+
 
         IconButton(
             onClick = { } ,
@@ -110,7 +117,7 @@ fun PlantBank(navController: NavHostController) {
                 painter = painterResource(id = R.drawable.buscar),
                 contentDescription = "buscar",
                 modifier = Modifier
-                    .fillMaxSize() // Esto asegura que la imagen ocupe todo el espacio del botón
+                    .fillMaxSize()
             )
         }
 
@@ -143,7 +150,7 @@ fun PlantBank(navController: NavHostController) {
                 .offset(
                     x = 46.dp,
                     y = 307.dp
-                ) // Ajusta la posición del texto debajo del cuadro
+                )
                 .requiredWidth(109.dp)
                 .align(Alignment.TopStart)
         )

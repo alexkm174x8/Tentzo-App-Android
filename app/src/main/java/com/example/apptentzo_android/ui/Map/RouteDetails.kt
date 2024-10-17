@@ -1,6 +1,7 @@
 package com.example.apptentzo_android.ui.Map
 
 import android.os.Bundle
+import com.example.apptentzo_android.R
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -20,6 +21,28 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.requiredWidth
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
+
 
 class RouteActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -32,126 +55,148 @@ class RouteActivity : ComponentActivity() {
 }
 
 @Composable
-fun RouteDetails() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Gray)
+fun RouteDetails(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .requiredWidth(width = 430.dp)
+            .requiredHeight(height = 932.dp)
     ) {
-        Spacer(modifier = Modifier.weight(1f))
-
         Box(
             modifier = Modifier
-                .clip(RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp))
-                .fillMaxWidth()
-                .height(600.dp)
-                .background(Color.White)
+                .requiredWidth(width = 430.dp)
+                .requiredHeight(height = 932.dp)
+                .clip(shape = RoundedCornerShape(30.dp))
+                .background(color = Color.White)
         ) {
-            Column(
+            Image(
+                painter = painterResource(id = R.drawable.rutafondo),
+                contentDescription = "rutafondo",
+                modifier = modifier
+                    .requiredWidth(width = 430.dp)
+                    .requiredHeight(height = 437.dp)
+                    .offset(y = -40.dp))
+            Text(
+                text = "60 min",
+                color = Color.Black,
+                textAlign = TextAlign.Center,
+                style = TextStyle(
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Light),
+                modifier = Modifier
+                    .align(alignment = Alignment.TopStart)
+                    .offset(x = 278.dp,
+                        y = 444.dp))
+            Text(
+                text = "3 km",
+                color = Color.Black,
+                textAlign = TextAlign.Center,
+                style = TextStyle(
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Light),
+                modifier = Modifier
+                    .align(alignment = Alignment.TopStart)
+                    .offset(x = 62.dp,
+                        y = 444.dp))
+            Text(
+                text = "Distancia:",
+                color = Color.Black,
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.headlineLarge,
+                modifier = Modifier
+                    .align(alignment = Alignment.TopStart)
+                    .offset(x = 28.dp,
+                        y = 398.dp))
+            Text(
+                text = "Tiempo:",
+                color = Color.Black,
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.headlineLarge,
+                modifier = Modifier
+                    .align(alignment = Alignment.TopStart)
+                    .offset(x = 263.dp,
+                        y = 398.dp))
+            Text(
+                text = "Detalles:",
+                color = Color.Black,
+                style = MaterialTheme.typography.headlineLarge,
+                modifier = Modifier
+                    .align(alignment = Alignment.TopStart)
+                    .offset(x = 21.dp,
+                        y = 540.dp)
+                    .requiredWidth(width = 291.dp))
+            Text(
+                text = "Ruta Tentzo",
+                color = Color.White.copy(alpha = 0.89f),
+                textAlign = TextAlign.Center,
+                style = TextStyle(
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Bold),
+                modifier = Modifier
+                    .align(alignment = Alignment.TopStart)
+                    .offset(x = 79.dp,
+                        y = 52.dp))
+            Text(
+                text = "La ruta Tentzo tiene una longitud de 8 kilómetros. A lo largo del recorrido, podrás disfrutar de una gran variedad de ecosistemas, desde bosques de pinos hasta áreas abiertas con praderas floridas.",
+                color = Color(0xff1e3045),
+                style = TextStyle(
+                    fontSize = 20.sp),
+                modifier = Modifier
+                    .align(alignment = Alignment.TopStart)
+                    .offset(x = 21.dp,
+                        y = 560.dp)
+                    .requiredWidth(width = 380.dp)
+                    .requiredHeight(height = 194.dp)
+                    .wrapContentHeight(align = Alignment.CenterVertically))
+
+            Divider(
+                color = Color(0xffd1d1d1),
+                modifier = Modifier
+                    .align(alignment = Alignment.TopStart)
+                    .offset(x = 28.dp,
+                        y = 510.dp)
+                    .requiredWidth(width = 380.dp))
+            Box(
+                modifier = Modifier
+                    .align(alignment = Alignment.TopStart)
+                    .offset(x = 45.dp,
+                        y = 763.dp)
+                    .requiredWidth(width = 340.dp)
+                    .requiredHeight(height = 56.dp)
+                    .clip(shape = RoundedCornerShape(30.dp))
+                    .background(color = Color(0xff7fc297))
+                    .clickable {
+                        // Acción al presionar el botón de emergencia
+                    })
+                Text(
+                    text = "Iniciar ruta",
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                    style = TextStyle(
+                        fontSize = 36.sp,
+                        fontWeight = FontWeight.Medium
+                    ),
+                    modifier = Modifier
+                        .align(alignment = Alignment.TopStart)
+                        .offset(
+                            x = 81.dp,
+                            y = 773.dp
+                        )
+                        .requiredWidth(width = 267.dp)
+                        .requiredHeight(height = 35.dp)
+                        .wrapContentHeight(align = Alignment.CenterVertically)
+                )
+            Image(
+                painter = painterResource(id = R.drawable.arrow_back),
+                contentDescription = "arrow_back",
+                colorFilter = ColorFilter.tint(Color.White),
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(16.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 20.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(
-                        modifier = Modifier.width(200.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "Distancia:",
-                            fontSize = 30.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Black
-                        )
-                    }
-                    Column(
-                        modifier = Modifier.width(200.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "Tiempo:",
-                            fontSize = 30.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Black
-                        )
-                    }
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(
-                        modifier = Modifier.width(200.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "3 km",
-                            fontSize = 30.sp,
-                            color = Color.Black
-                        )
-                    }
-                    Column(
-                        modifier = Modifier.width(200.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "60 min",
-                            fontSize = 30.sp,
-                            color = Color.Black
-                        )
-                    }
-                }
-                Divider(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 20.dp),
-                    thickness = 1.dp,
-                    color = Color.Gray
-                )
-                Row{
-                    Text(
-                        text = "Detalles:",
-                        fontSize = 30.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.Black
-                    )
-                }
-                Row {
-                    Text(
-                        text = "La ruta \"Tentzo\" tiene una longitud de 8 kilómetros. A lo largo del recorrido, podrás disfrutar de una gran variedad de ecosistemas, desde bosques de pinos hasta áreas abiertas con praderas floridas.",
-                        fontSize = 20.sp,
-                        color = Color.Black,
-                        modifier = Modifier.padding(top = 20.dp),
-                    )
-                }
-                Row (
-                    modifier = Modifier.fillMaxWidth()
-                        .padding(vertical = 90.dp),
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Button(
-                        onClick = { /*TODO*/ },
-                        modifier = Modifier.padding(16.dp)
-                            .width(300.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7FC297))
-                    ) {
-                        Text(
-                            text = "Iniciar Ruta",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 25.sp
-                        )
-                    }
-                }
-            }
+                    .padding(start = 8.dp,
+                        end = 373.dp,
+                        top = 42.dp,
+                        bottom = 831.dp))
         }
-    }
+}
 }
 
 @Preview(showBackground = true, heightDp = 932, widthDp = 430)
