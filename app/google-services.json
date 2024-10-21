@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "67694959123",
+    "firebase_url": "https://app-ocoyucan-default-rtdb.firebaseio.com",
+    "project_id": "app-ocoyucan",
+    "storage_bucket": "app-ocoyucan.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:67694959123:android:b20b543cfa26f203317de6",
+        "android_client_info": {
+          "package_name": "com.example.apptentzo_android"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBvbCrkz__55lNZsFNxrDZwePSrGqFtLvw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:67694959123:android:59b806e5e1850080317de6",
+        "android_client_info": {
+          "package_name": "mx.tex.a01736897"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBvbCrkz__55lNZsFNxrDZwePSrGqFtLvw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
