@@ -39,7 +39,7 @@ fun Logo(navController: NavController, modifier: Modifier = Modifier) {
 
     // Navegar después de 3 segundos
     LaunchedEffect(Unit) {
-        delay(2000) // Espera 3 segundos
+        delay(1000) // Espera 3 segundos
         navController.navigate("login_screen") { // Asegúrate de usar el mismo nombre que definiste en NavHost
             popUpTo("logo_screen") { inclusive = true } // Evitar que el usuario regrese a la pantalla del logo
         }

@@ -33,6 +33,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.apptentzo_android.ui.Camera.CameraScreen
 import com.example.apptentzo_android.ui.Info.InfoScreen
 import com.example.apptentzo_android.ui.Inicio.Logo
+import com.example.apptentzo_android.ui.SignIn.SignIn
 import com.example.apptentzo_android.ui.Login.Login
 import com.example.apptentzo_android.ui.Map.MapScreen
 import com.example.apptentzo_android.ui.Menu.HomeScreen
@@ -60,16 +61,20 @@ fun MainScreen() {
         composable("login_screen") {
             Login(navController) // Pantalla de login sin barra de navegación
         }
+        composable("signin_screen") { // Asegúrate de que esta ruta esté definida
+            SignIn(navController)
+        }
         // Pantallas que tienen la barra de navegación
         composable("menu_screen") {
             Scaffold(
                 bottomBar = { BottomNavigationBar(navController = navController, selectedScreen) { selectedScreen = it } }
             ) { innerPadding ->
                 Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
-                    HomeScreen() // Contenido de la pantalla de inicio
+                    HomeScreen() // Aquí se pasa el navController
                 }
             }
         }
+
         composable("library_screen") {
             Scaffold(
                 bottomBar = { BottomNavigationBar(navController = navController, selectedScreen) { selectedScreen = it } }

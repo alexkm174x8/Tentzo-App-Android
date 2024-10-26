@@ -1,5 +1,7 @@
 package com.example.apptentzo_android.ui.Menu
 
+import android.content.Intent
+import android.net.Uri
 import com.example.apptentzo_android.R
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -34,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -60,6 +63,7 @@ fun HomeScreen(modifier: Modifier = Modifier) {
     var showDialog3 by remember { mutableStateOf(false) }
     var showDialog4 by remember { mutableStateOf(false) }
     var showDialog5 by remember { mutableStateOf(false) }
+    val context = LocalContext.current
     Box(
         modifier = modifier
             .requiredWidth(width = 430.dp)
@@ -311,7 +315,8 @@ fun HomeScreen(modifier: Modifier = Modifier) {
                 .clip(shape = RoundedCornerShape(30.dp))
                 .background(color = Color(0xff7FC297))
                 .clickable {
-                    // Acción al presionar el botón de emergencia
+                        val dialIntent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:911"))
+                        context.startActivity(dialIntent)
                 }
         ) {
             Text(

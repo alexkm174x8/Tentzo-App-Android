@@ -1,32 +1,32 @@
 package com.example.apptentzo_android.ui.Login
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.google.firebase.auth.FirebaseAuth
+import android.util.Log
 
 @Composable
-fun Login(navController: NavController) {
-    var email by remember { mutableStateOf("estefania@gmail.com") } // Datos de prueba
-    var password by remember { mutableStateOf("estefania123") } // Datos de prueba
+fun Login(navController: NavController, modifier: Modifier = Modifier) {
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var showErrorDialog by remember { mutableStateOf(false) }
+    var auth = FirebaseAuth.getInstance()
 
     Box(
         contentAlignment = Alignment.Center,
@@ -58,6 +58,20 @@ fun Login(navController: NavController) {
                     fontWeight = FontWeight.Medium
                 ),
                 modifier = Modifier.padding(bottom = 20.dp)
+            )
+
+            Text(
+                text = "¿No tienes cuenta? Regístrate",
+                style = TextStyle(
+                    fontSize = 24.sp,
+                    color = Color(0xff247d3d),
+                ),
+                modifier = Modifier
+                    .padding(bottom = 20.dp)
+                    .clickable {
+                        navController.navigate("signin_screen")
+                    }
+                    .padding(top = 20.dp)
             )
 
             TextField(
@@ -95,10 +109,17 @@ fun Login(navController: NavController) {
                     .clip(RoundedCornerShape(8.dp))
                     .background(color = Color(0xff7fc297))
                     .clickable {
-                        // Navegar a MenuScreen al hacer clic
-                        navController.navigate("menu_screen") {
-                            popUpTo("login_screen") { inclusive = true } // Evitar regresar a Login
-                        }
+                        auth.signInWithEmailAndPassword(email, password)
+                            .addOnCompleteListener { task ->
+                                if (task.isSuccessful) {
+                                    navController.navigate("menu_screen") {
+                                        popUpTo("login_screen") { inclusive = true }
+                                    }
+                                } else {
+                                    showErrorDialog = true // Mostrar el diálogo de error
+                                    Log.w("Firebase", "Error en inicio de sesión", task.exception)
+                                }
+                            }
                     },
                 contentAlignment = Alignment.Center
             ) {
@@ -113,7 +134,6 @@ fun Login(navController: NavController) {
                 )
             }
 
-            // Texto para recuperación de contraseña
             Text(
                 text = "¿Olvidaste tu contraseña?",
                 color = Color(0xff247d3d).copy(alpha = 0.89f),
@@ -125,6 +145,20 @@ fun Login(navController: NavController) {
             )
         }
     }
+
+    // Diálogo de error
+    if (showErrorDialog) {
+        AlertDialog(
+            onDismissRequest = { showErrorDialog = false },
+            title = { Text(text = "Error") },
+            text = { Text(text = "Contraseña incorrecta. Intenta de nuevo.") },
+            confirmButton = {
+                TextButton(
+                    onClick = { showErrorDialog = false }
+                ) {
+                    Text("OK")
+                }
+            }
+        )
+    }
 }
-
-

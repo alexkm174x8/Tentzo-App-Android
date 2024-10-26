@@ -1,7 +1,7 @@
 plugins {
 
-    id("com.android.application")
-    id("com.google.gms.google-services")
+    id("com.android.application") // Apply the Android application plugin
+    id("com.google.gms.google-services") // Apply the Google Services plugin
 
     alias(libs.plugins.jetbrains.kotlin.android)
 }
@@ -53,11 +53,14 @@ android {
 }
 
 dependencies {
-    implementation(platform("com.google.firebase:firebase-bom:33.4.0"))
-    implementation("com.google.firebase:firebase-analytics")
-    implementation("com.google.firebase:firebase-auth-ktx:23.2.0") // Agrega esta línea
+    // Use the Firebase BoM to manage Firebase SDK versions
+    implementation(platform("com.google.firebase:firebase-bom:33.4.0")) // Use the appropriate BoM version
+    implementation("com.google.firebase:firebase-auth-ktx") // Include Firebase Authentication library
 
-    implementation(libs.androidx.core.ktx)
+    // Include other dependencies your app requires
+    implementation("androidx.core:core-ktx:1.10.0") // Core KTX library for Android
+    implementation ("com.google.firebase:firebase-auth:23.1.0")
+
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
@@ -66,6 +69,7 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.firebase.firestore.ktx)
+    implementation(libs.firebase.auth)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

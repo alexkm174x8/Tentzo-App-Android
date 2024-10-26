@@ -1,25 +1,12 @@
-package com.example.apptentzo_android.ui.Inicio
+package com.example.apptentzo_android.ui.SignIn
 
-import android.os.Bundle
 import android.util.Log
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredHeight
-import androidx.compose.foundation.layout.requiredWidth
-import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -33,19 +20,33 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.apptentzo_android.R
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import androidx.navigation.NavController
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.requiredWidth
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+
 
 @Composable
-fun SignIn(modifier: Modifier = Modifier) {
+fun SignIn(navController: NavController, modifier: Modifier = Modifier) {
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
-
+    var showErrorDialog by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
     // Inicializa FirebaseAuth y Firestore
     val auth = FirebaseAuth.getInstance()
     val db = FirebaseFirestore.getInstance()
@@ -100,6 +101,7 @@ fun SignIn(modifier: Modifier = Modifier) {
             onValueChange = { name = it },
             placeholder = { Text(text = "Nombre", color = Color.Gray) },
             modifier = Modifier
+                .offset(x = 60.dp, y = 250.dp)
                 .align(alignment = Alignment.TopStart)
                 .offset(y = 30.dp)
                 .requiredWidth(width = 336.dp)
@@ -125,6 +127,7 @@ fun SignIn(modifier: Modifier = Modifier) {
             onValueChange = { email = it },
             placeholder = { Text(text = "Correo", color = Color.Gray) },
             modifier = Modifier
+                .offset(x = 60.dp, y = 350.dp)
                 .align(alignment = Alignment.TopStart)
                 .offset(y = 30.dp)
                 .requiredWidth(width = 336.dp)
@@ -151,14 +154,13 @@ fun SignIn(modifier: Modifier = Modifier) {
             placeholder = { Text(text = "Contraseña", color = Color.Gray) },
             modifier = Modifier
                 .align(alignment = Alignment.TopStart)
-                .offset(y = 30.dp)
+                .offset(x = 60.dp, y = 480.dp)
                 .requiredWidth(width = 336.dp)
                 .requiredHeight(height = 56.dp)
                 .clip(shape = RoundedCornerShape(8.dp))
                 .background(color = Color.White)
                 .border(BorderStroke(1.dp, Color(0xff757575)))
                 .padding(horizontal = 16.dp)
-            // Asegúrate de usar el tipo de texto adecuado para la contraseña
         )
 
         // Repetir Contraseña
@@ -176,6 +178,7 @@ fun SignIn(modifier: Modifier = Modifier) {
             onValueChange = { confirmPassword = it },
             placeholder = { Text(text = "Repite la contraseña", color = Color.Gray) },
             modifier = Modifier
+                .offset(x = 60.dp, y = 560.dp)
                 .align(alignment = Alignment.TopStart)
                 .offset(y = 30.dp)
                 .requiredWidth(width = 336.dp)
@@ -184,7 +187,6 @@ fun SignIn(modifier: Modifier = Modifier) {
                 .background(color = Color.White)
                 .border(BorderStroke(1.dp, Color(0xff757575)))
                 .padding(horizontal = 16.dp)
-            // Asegúrate de usar el tipo de texto adecuado para la contraseña
         )
 
         // Botón de registro
@@ -192,43 +194,70 @@ fun SignIn(modifier: Modifier = Modifier) {
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
             modifier = modifier
-                .offset(y = 220.dp)
+                .offset(x = 40.dp, y = 320.dp)
                 .requiredWidth(width = 289.dp)
                 .requiredHeight(height = 48.dp)
                 .clip(shape = RoundedCornerShape(8.dp))
                 .background(color = Color(0xff7fc297))
                 .clickable {
-                    // Validar las contraseñas y registrar al usuario
-                    if (password == confirmPassword) {
-                        auth.createUserWithEmailAndPassword(email, password)
-                            .addOnCompleteListener { task ->
-                                if (task.isSuccessful) {
-                                    val user = hashMapOf(
-                                        "user_id" to user_id,
-                                        "name" to name,
-                                        "email" to email,
-                                        "password" to password, // Consider hashing the password before storing it
-                                        "points" to 0,
-                                        "profile_picture" to ""
-                                    )
-                                    val user_id = auth.currentUser?.uid
-                                    if (user_id != null) {
-                                        db.collection("usuario").document(user_id)
-                                            .set(user)
-                                            .addOnSuccessListener {
-                                                Log.d("Firebase", "Usuario registrado correctamente")
-                                                // Aquí puedes redirigir al usuario a otra pantalla
+                    // Validar campos
+                    if (name.isEmpty() || email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
+                        errorMessage = "Por favor llena todos los campos"
+                        showErrorDialog = true
+                        return@clickable
+                    }
+
+                    if (password.length < 8) {
+                        errorMessage = "La contraseña debe tener al menos 8 caracteres"
+                        showErrorDialog = true
+                        return@clickable
+                    }
+
+                    if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                        errorMessage = "Por favor ingresa un correo electrónico válido"
+                        showErrorDialog = true
+                        return@clickable
+                    }
+
+
+                    if (password != confirmPassword) {
+                        errorMessage = "Las contraseñas no coinciden"
+                        showErrorDialog = true
+                        return@clickable
+                    }
+
+                    auth.createUserWithEmailAndPassword(email, password)
+                        .addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                val userId = auth.currentUser?.uid
+                                val user = hashMapOf(
+                                    "user_id" to userId,
+                                    "name" to name,
+                                    "email" to email,
+                                    "password" to password, // **No almacenes la contraseña en texto plano**
+                                    "points" to 0,
+                                    "profile_picture" to ""
+                                )
+                                if (userId != null) {
+                                    db.collection("usuarios").document(userId)
+                                        .set(user)
+                                        .addOnSuccessListener {
+                                            Log.d("Firebase", "Usuario registrado correctamente")
+                                            // Navegar a otra pantalla o mostrar un mensaje
+                                            navController.navigate("menu_screen") {
+                                                popUpTo("login_screen") { inclusive = true } // Evitar regresar a Login
                                             }
-                                            .addOnFailureListener { e ->
-                                                Log.w("Firebase", "Error al agregar usuario", e)
-                                            }
-                                    }
-                                } else {
-                                    Log.w("Firebase", "Error en registro", task.exception)
+                                        }
+                                        .addOnFailureListener { e ->
+                                            Log.w("Firebase", "Error al agregar usuario", e)
+                                        }
                                 }
+                            } else {
+                                Log.w("Firebase", "Error en registro", task.exception)
                             }
-                    } else {
-                        Log.w("Firebase", "Las contraseñas no coinciden")
+                        }
+                    navController.navigate("login_screen") {
+                        popUpTo("signin_screen") { inclusive = true } // Evitar regresar a signin
                     }
                 }
                 .padding(all = 12.dp)
@@ -247,6 +276,7 @@ fun SignIn(modifier: Modifier = Modifier) {
                     .wrapContentHeight(align = Alignment.CenterVertically)
             )
         }
+
         // Resto del código para Google Sign-In
         Box(
             modifier = Modifier
@@ -256,7 +286,8 @@ fun SignIn(modifier: Modifier = Modifier) {
                 .requiredHeight(height = 528.dp)
                 .clip(shape = RoundedCornerShape(30.dp))
                 .border(border = BorderStroke(1.dp, Color(0xff2b3707)),
-                    shape = RoundedCornerShape(30.dp)))
+                    shape = RoundedCornerShape(30.dp))
+        )
         Box(
             modifier = Modifier
                 .align(alignment = Alignment.TopStart)
@@ -273,10 +304,20 @@ fun SignIn(modifier: Modifier = Modifier) {
                 modifier = Modifier.fillMaxSize()
             )
         }
+        // Diálogo de error
+        if (showErrorDialog) {
+            AlertDialog(
+                onDismissRequest = { showErrorDialog = false },
+                title = { Text(text = "Error") },
+                text = { Text(text = errorMessage) },
+                confirmButton = {
+                    TextButton(
+                        onClick = { showErrorDialog = false }
+                    ) {
+                        Text("OK")
+                    }
+                }
+            )
+        }
     }
-}
-
-@Composable
-fun SignInPreview() {
-    SignIn(Modifier)
 }
