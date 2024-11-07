@@ -10,6 +10,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
@@ -25,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -38,7 +40,7 @@ import com.example.apptentzo_android.ui.Login.Login
 import com.example.apptentzo_android.ui.Map.MapScreen
 import com.example.apptentzo_android.ui.Menu.HomeScreen
 import com.example.biblioteca.PlantBank
-
+import com.example.apptentzo_android.R
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -113,7 +115,7 @@ fun MainScreen() {
         }
         composable("plant_details_screen/{plantId}") { backStackEntry ->
             val plantId = backStackEntry.arguments?.getString("plantId")
-            PlantInfo() // Implementa la lógica para la pantalla de detalles de la planta
+//            PlantInfo() // Implementa la lógica para la pantalla de detalles de la planta
         }
     }
 }
@@ -123,6 +125,7 @@ fun BottomNavigationBar(navController: NavHostController, selectedScreen: String
     NavigationBar(
         modifier = Modifier
             .fillMaxWidth()
+            .height(60.dp)
             .offset(x = 9.dp, y = -30.dp)
             .clip(shape = RoundedCornerShape(15.dp))
             .background(color = Color.White)
@@ -220,4 +223,10 @@ fun BottomNavigationBar(navController: NavHostController, selectedScreen: String
             }
         )
     }
+}
+
+@Preview(showBackground = true, heightDp = 932, widthDp = 430)
+@Composable
+fun Main() {
+    MainScreen()
 }

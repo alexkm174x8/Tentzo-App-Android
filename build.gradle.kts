@@ -10,6 +10,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath("com.google.gms:google-services:4.4.2") // Asegúrate de que solo esté aquí
+        classpath("com.google.gms:google-services:4.4.2") // Update this if a newer version is available
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.0") // Update to the latest stable version
     }
 }

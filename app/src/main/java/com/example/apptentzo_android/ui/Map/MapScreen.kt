@@ -3,7 +3,6 @@ package com.example.apptentzo_android.ui.Map
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -34,13 +33,24 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.MapUiSettings
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
+
 
 class MapActivity: ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContent {
-                MapScreen()
+            MapScreen()
         }
     }
 }
@@ -50,18 +60,46 @@ fun MapScreen() {
     var boxHeight by remember { mutableStateOf(200.dp) }
     val minHeight = 200.dp
     val maxHeight = 700.dp
+    val density = LocalDensity.current.density // Get the density here
 
-    val density = LocalDensity.current
+    // Permission handling code
+    val context = LocalContext.current
+    var isLocationPermissionGranted by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Gray)
+    val launcher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        isLocationPermissionGranted = permissions.values.all { it }
+    }
+
+    LaunchedEffect(Unit) {
+        val locationPermissions = arrayOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        )
+
+        isLocationPermissionGranted = hasPermissions(context, locationPermissions)
+
+        if (!isLocationPermissionGranted) {
+            launcher.launch(locationPermissions)
+        }
+    }
+
+    Box(
+        modifier = Modifier.fillMaxSize()
     ) {
-        Spacer(modifier = Modifier.weight(1f))
+        // GoogleMap at the background
+        GoogleMap(
+            modifier = Modifier
+                .fillMaxSize(),
+            properties = MapProperties(isMyLocationEnabled = isLocationPermissionGranted),
+            uiSettings = MapUiSettings(zoomControlsEnabled = true)
+        )
 
+        // Box overlay at the bottom of the map
         Box(
             modifier = Modifier
+                .align(Alignment.BottomCenter)
                 .clip(RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp))
                 .fillMaxWidth()
                 .height(boxHeight)
@@ -69,11 +107,12 @@ fun MapScreen() {
                 .pointerInput(Unit) {
                     detectDragGestures { change, dragAmount ->
                         change.consume()
-                        val dragInDp = with(density) { dragAmount.y.toDp() }
+                        val dragInDp = (dragAmount.y / density).dp // Use density directly here
                         boxHeight = (boxHeight - dragInDp).coerceIn(minHeight, maxHeight)
                     }
                 }
         ) {
+            // Content of the Box
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -104,7 +143,7 @@ fun MapScreen() {
                             .width(400.dp)
                             .padding(10.dp)
                             .clickable {
-                                //navController.navigate("detalle")
+                                // Click action
                             }
                     ) {
                         Text(
@@ -121,8 +160,14 @@ fun MapScreen() {
     }
 }
 
+private fun hasPermissions(context: Context, permissions: Array<String>): Boolean {
+    return permissions.all {
+        ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+    }
+}
+
 @Preview(showBackground = true, heightDp = 932, widthDp = 430)
 @Composable
 fun Map() {
-        MapScreen()
+    MapScreen()
 }
