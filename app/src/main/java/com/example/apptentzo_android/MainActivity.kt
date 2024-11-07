@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.requiredWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -22,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -41,6 +43,7 @@ import com.example.apptentzo_android.ui.Map.MapScreen
 import com.example.apptentzo_android.ui.Menu.HomeScreen
 import com.example.biblioteca.PlantBank
 import com.example.apptentzo_android.R
+import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,82 +58,90 @@ class MainActivity : ComponentActivity() {
 fun MainScreen() {
     val navController = rememberNavController()
     var selectedScreen by remember { mutableStateOf("menu_screen") } // Estado para la pantalla seleccionada
+    val mAuth = FirebaseAuth.getInstance()
+    val currentUser = mAuth.currentUser
 
-    NavHost(navController = navController, startDestination = "logo_screen") {
-        composable("logo_screen") {
-            Logo(navController) // Pantalla de logo sin barra de navegación
-        }
-        composable("login_screen") {
-            Login(navController) // Pantalla de login sin barra de navegación
-        }
-        composable("signin_screen") { // Asegúrate de que esta ruta esté definida
-            SignIn(navController)
-        }
-        // Pantallas que tienen la barra de navegación
-        composable("menu_screen") {
-            Scaffold(
-                bottomBar = { BottomNavigationBar(navController = navController, selectedScreen) { selectedScreen = it } }
-            ) { innerPadding ->
-                Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
-                    HomeScreen() // Aquí se pasa el navController
+    // Redireccionar según el estado de autenticación
+    if (currentUser != null) {
+        // Si el usuario ya está autenticado, ir a la pantalla principal
+        NavHost(navController = navController, startDestination = "menu_screen") {
+            composable("menu_screen") {
+                Scaffold(
+                    bottomBar = { BottomNavigationBar(navController = navController, selectedScreen) { selectedScreen = it } }
+                ) { innerPadding ->
+                    Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
+                        HomeScreen() // Aquí se pasa el navController
+                    }
                 }
             }
-        }
 
-        composable("library_screen") {
-            Scaffold(
-                bottomBar = { BottomNavigationBar(navController = navController, selectedScreen) { selectedScreen = it } }
-            ) { innerPadding ->
-                Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
-                    PlantBank(navController)
+            composable("library_screen") {
+                Scaffold(
+                    bottomBar = { BottomNavigationBar(navController = navController, selectedScreen) { selectedScreen = it } }
+                ) { innerPadding ->
+                    Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
+                        PlantBank(navController)
+                    }
                 }
             }
-        }
-        composable("camera_screen") {
-            Scaffold(
-                bottomBar = { BottomNavigationBar(navController = navController, selectedScreen) { selectedScreen = it } }
-            ) { innerPadding ->
-                Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
-                    CameraScreen()
+            composable("camera_screen") {
+                Scaffold(
+                    bottomBar = { BottomNavigationBar(navController = navController, selectedScreen) { selectedScreen = it } }
+                ) { innerPadding ->
+                    Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
+                        CameraScreen()
+                    }
                 }
             }
-        }
-        composable("map_screen") {
-            Scaffold(
-                bottomBar = { BottomNavigationBar(navController = navController, selectedScreen) { selectedScreen = it } }
-            ) { innerPadding ->
-                Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
-                    MapScreen()
+            composable("map_screen") {
+                Scaffold(
+                    bottomBar = { BottomNavigationBar(navController = navController, selectedScreen) { selectedScreen = it } }
+                ) { innerPadding ->
+                    Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
+                        MapScreen()
+                    }
                 }
             }
-        }
-        composable("info_screen") {
-            Scaffold(
-                bottomBar = { BottomNavigationBar(navController = navController, selectedScreen) { selectedScreen = it } }
-            ) { innerPadding ->
-                Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
-                    InfoScreen()
+            composable("info_screen") {
+                Scaffold(
+                    bottomBar = { BottomNavigationBar(navController = navController, selectedScreen) { selectedScreen = it } }
+                ) { innerPadding ->
+                    Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
+                        InfoScreen()
+                    }
                 }
             }
-        }
-        composable("plant_details_screen/{plantId}") { backStackEntry ->
-            val plantId = backStackEntry.arguments?.getString("plantId")
+            composable("plant_details_screen/{plantId}") { backStackEntry ->
+                val plantId = backStackEntry.arguments?.getString("plantId")
 //            PlantInfo() // Implementa la lógica para la pantalla de detalles de la planta
+            }
+        }
+    } else {
+        NavHost(navController = navController, startDestination = "logo_screen") {
+            composable("logo_screen") {
+                Logo(navController) // Pantalla de logo sin barra de navegación
+            }
+            composable("login_screen") {
+                Login(navController) // Pantalla de login sin barra de navegación
+            }
+            composable("signin_screen") { // Asegúrate de que esta ruta esté definida
+                SignIn(navController)
+            }
         }
     }
 }
+
+
 
 @Composable
 fun BottomNavigationBar(navController: NavHostController, selectedScreen: String, onScreenSelected: (String) -> Unit) {
     NavigationBar(
         modifier = Modifier
             .fillMaxWidth()
-            .height(60.dp)
-            .offset(x = 9.dp, y = -30.dp)
-            .clip(shape = RoundedCornerShape(15.dp))
-            .background(color = Color.White)
-            .border(BorderStroke(1.dp, Color(0xffb6b6b6)),
-                shape = RoundedCornerShape(15.dp))
+            .height(70.dp) // Ajusta la altura para mejorar la alineación
+            .clip(RoundedCornerShape(15.dp))
+            .background(Color.White)
+            .border(BorderStroke(1.dp, Color(0xffb6b6b6)), RoundedCornerShape(15.dp))
     ) {
         NavigationBarItem(
             selected = selectedScreen == "menu_screen",
@@ -146,7 +157,8 @@ fun BottomNavigationBar(navController: NavHostController, selectedScreen: String
                 Image(
                     painter = painterResource(id = R.drawable.casaicon),
                     contentDescription = "Menu Icon",
-                    modifier = Modifier.requiredWidth(30.dp).requiredHeight(30.dp)
+                    modifier = Modifier
+                        .size(32.dp) // Asegura un tamaño consistente y centrado
                 )
             }
         )
@@ -164,7 +176,7 @@ fun BottomNavigationBar(navController: NavHostController, selectedScreen: String
                 Image(
                     painter = painterResource(id = R.drawable.planticon),
                     contentDescription = "Library Icon",
-                    modifier = Modifier.requiredWidth(30.dp).requiredHeight(30.dp)
+                    modifier = Modifier.size(32.dp) // Tamaño consistente
                 )
             }
         )
@@ -182,7 +194,7 @@ fun BottomNavigationBar(navController: NavHostController, selectedScreen: String
                 Image(
                     painter = painterResource(id = R.drawable.camaraicon),
                     contentDescription = "Camera Icon",
-                    modifier = Modifier.requiredWidth(30.dp).requiredHeight(30.dp)
+                    modifier = Modifier.size(32.dp) // Tamaño consistente
                 )
             }
         )
@@ -200,7 +212,7 @@ fun BottomNavigationBar(navController: NavHostController, selectedScreen: String
                 Image(
                     painter = painterResource(id = R.drawable.mapaicon),
                     contentDescription = "Map Icon",
-                    modifier = Modifier.requiredWidth(30.dp).requiredHeight(30.dp)
+                    modifier = Modifier.size(32.dp) // Tamaño consistente
                 )
             }
         )
@@ -218,7 +230,7 @@ fun BottomNavigationBar(navController: NavHostController, selectedScreen: String
                 Image(
                     painter = painterResource(id = R.drawable.infoicon),
                     contentDescription = "Info Icon",
-                    modifier = Modifier.requiredWidth(30.dp).requiredHeight(30.dp)
+                    modifier = Modifier.size(32.dp) // Tamaño consistente
                 )
             }
         )
