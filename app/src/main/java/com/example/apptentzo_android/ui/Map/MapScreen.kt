@@ -44,19 +44,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import androidx.navigation.NavHostController
 
-
-class MapActivity: ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            MapScreen()
-        }
-    }
-}
 
 @Composable
-fun MapScreen() {
+fun MapScreen(navController: NavHostController) {
     var boxHeight by remember { mutableStateOf(200.dp) }
     val minHeight = 200.dp
     val maxHeight = 700.dp
@@ -143,7 +135,7 @@ fun MapScreen() {
                             .width(400.dp)
                             .padding(10.dp)
                             .clickable {
-                                // Click action
+                                navController.navigate("RouteDetails")
                             }
                     ) {
                         Text(
@@ -166,8 +158,3 @@ private fun hasPermissions(context: Context, permissions: Array<String>): Boolea
     }
 }
 
-@Preview(showBackground = true, heightDp = 932, widthDp = 430)
-@Composable
-fun Map() {
-    MapScreen()
-}
