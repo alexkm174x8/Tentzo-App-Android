@@ -64,6 +64,9 @@ dependencies {
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("androidx.core:core-ktx:1.15.0")
     implementation("com.google.firebase:firebase-auth:23.1.0")
+    implementation ("com.google.maps.android:maps-ktx:3.4.0")
+
+
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))

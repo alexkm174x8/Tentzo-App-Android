@@ -45,6 +45,8 @@ import com.example.biblioteca.PlantBank
 import com.example.apptentzo_android.R
 import com.google.firebase.auth.FirebaseAuth
 import com.example.apptentzo_android.ui.Map.RouteDetails
+import com.example.apptentzo_android.ui.Map.RouteDisplay
+import com.example.apptentzo_android.ui.Map.RouteDisplayContent
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -103,9 +105,15 @@ fun MainScreen() {
                     }
                 }
             }
+
             composable("RouteDetails") {
-                RouteDetails() // Implementa la lógica para la pantalla de detalles de la planta
+                RouteDetails(navController) // Implementa la lógica para la pantalla de detalles de la planta
             }
+
+            composable("RouteDisplay") {
+                RouteDisplayContent() // Implementa la lógica para la pantalla de detalles de la planta
+            }
+
             composable("info_screen") {
                 Scaffold(
                     bottomBar = { BottomNavigationBar(navController = navController, selectedScreen) { selectedScreen = it } }

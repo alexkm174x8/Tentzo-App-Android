@@ -42,20 +42,11 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.navigation.NavHostController
 
-
-class RouteActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            RouteDetails()
-        }
-    }
-}
 
 @Composable
-fun RouteDetails(modifier: Modifier = Modifier) {
+fun RouteDetails(navController: NavHostController, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .requiredWidth(width = 430.dp)
@@ -165,7 +156,7 @@ fun RouteDetails(modifier: Modifier = Modifier) {
                     .clip(shape = RoundedCornerShape(30.dp))
                     .background(color = Color(0xff7fc297))
                     .clickable {
-                        // Acción al presionar el botón de emergencia
+                        navController.navigate("RouteDisplay")
                     })
                 Text(
                     text = "Iniciar ruta",
@@ -197,10 +188,4 @@ fun RouteDetails(modifier: Modifier = Modifier) {
                         bottom = 831.dp))
         }
 }
-}
-
-@Preview(showBackground = true, heightDp = 932, widthDp = 430)
-@Composable
-fun Routes() {
-    RouteDetails()
 }
