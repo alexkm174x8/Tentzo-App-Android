@@ -51,7 +51,7 @@ fun PlantBank(navController: NavHostController) {
     Box(
         modifier = Modifier
             .requiredWidth(width = 430.dp)
-            .requiredHeight(height = 932.dp)
+            .requiredHeight(height = 875.dp)
             .clip(shape = RoundedCornerShape(30.dp))
             .background(color = Color.White)
     ) {
