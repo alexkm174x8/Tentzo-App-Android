@@ -183,13 +183,13 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
 
                 // Sección "Flor del Día"
                 Text(
-                    text = "Flor del Día",
+                    text = "Especie del Día",
                     color = Color.Black,
                     style = MaterialTheme.typography.headlineSmall,
                     modifier = Modifier
                         .align(alignment = Alignment.TopStart)
                         .offset(
-                            x = 150.dp,
+                            x = 130.dp,
                             y = 461.dp
                         )
                         .requiredWidth(width = 228.dp)
@@ -310,7 +310,7 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
                     ) {
                         AsyncImage(
                             model = flor.imagen,
-                            contentDescription = "Flor del Día",
+                            contentDescription = "Especie del Día",
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop
                         )
@@ -562,7 +562,7 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
                                 )
                                 // Título: "Flor del Día"
                                 Text(
-                                    text = "Flor del Día",
+                                    text = "Especie del Día",
                                     color = Color(0xff000003),
                                     textAlign = TextAlign.Center,
                                     style = TextStyle(
