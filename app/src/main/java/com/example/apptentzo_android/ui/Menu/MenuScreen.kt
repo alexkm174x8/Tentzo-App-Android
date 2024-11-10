@@ -5,13 +5,34 @@ import android.net.Uri
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.requiredWidth
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -20,6 +41,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -31,6 +53,7 @@ import coil.compose.AsyncImage
 import com.example.apptentzo_android.R
 import com.example.apptentzo_android.ui.model.Insignia
 import com.example.apptentzo_android.ui.model.InsigniaRequirement
+import com.example.apptentzo_android.ui.model.Planta
 import com.example.apptentzo_android.ui.model.Usuario
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -40,6 +63,7 @@ import kotlinx.coroutines.tasks.await
 fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifier) {
     var showDialog by remember { mutableStateOf(false) }
     var showDialogInsignia by remember { mutableStateOf(false) }
+    var showDialogFlor by remember { mutableStateOf(false) }
     var selectedInsignia: Insignia? by remember { mutableStateOf(null) }
     val context = LocalContext.current
 
@@ -49,9 +73,10 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
 
     var usuario by remember { mutableStateOf<Usuario?>(null) }
     var insigniasList by remember { mutableStateOf<List<Insignia>>(emptyList()) }
+    var florDelDia by remember { mutableStateOf<Planta?>(null) }
     var isLoading by remember { mutableStateOf(true) }
 
-    // Obtener datos del usuario e insignias desde Firestore
+    // Obtener datos del usuario, insignias y planta aleatoria desde Firestore
     LaunchedEffect(userId) {
         isLoading = true
         if (userId != null) {
@@ -65,14 +90,47 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
                 val insigniaSnapshots = db.collection("Insignia").get().await()
                 insigniasList = insigniaSnapshots.documents.mapNotNull { doc ->
                     val id = doc.id
+                    val nombre = doc.getString("nombre") ?: ""
+                    val descripcion = doc.getString("descripcion") ?: ""
                     val imagen_b = doc.getString("imagen_b")
                     val imagen_d = doc.getString("imagen_d")
                     if (imagen_b != null && imagen_d != null) {
-                        Insignia(id = id, imagen_b = imagen_b, imagen_d = imagen_d)
+                        Insignia(
+                            id = id,
+                            nombre = nombre,
+                            descripcion = descripcion,
+                            imagen_b = imagen_b,
+                            imagen_d = imagen_d
+                        )
                     } else {
                         null
                     }
                 }
+
+                // Obtener plantas y seleccionar una aleatoria para la "Flor del Día"
+                val plantaSnapshots = db.collection("Planta").get().await()
+                val plantasList = plantaSnapshots.documents.mapNotNull { doc ->
+                    val id = doc.id
+                    val nomComun = doc.getString("nomComun") ?: ""
+                    val nomCientifico = doc.getString("nomCientifico") ?: ""
+                    val descripcion = doc.getString("descripcion") ?: ""
+                    val imagen = doc.getString("imagen") ?: ""
+                    if (imagen.isNotEmpty()) {
+                        Planta(
+                            id = id,
+                            nomComun = nomComun,
+                            nomCientifico = nomCientifico,
+                            descripcion = descripcion,
+                            imagen = imagen
+                        )
+                    } else {
+                        null
+                    }
+                }
+                if (plantasList.isNotEmpty()) {
+                    florDelDia = plantasList.random()
+                }
+
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -237,29 +295,33 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
                 )
 
                 // Imagen de la flor del día
-                Box(
-                    modifier = Modifier
-                        .align(alignment = Alignment.TopStart)
-                        .offset(x = 60.dp, y = 500.dp)
-                        .requiredWidth(300.dp)
-                        .requiredHeight(250.dp)
-                        .clip(RoundedCornerShape(30.dp))
-                        .clickable {
-                            showDialog = true
-                        }
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.flordia),
-                        contentDescription = "flordia",
-                        modifier = Modifier.fillMaxSize()
-                    )
+                florDelDia?.let { flor ->
+                    Box(
+                        modifier = Modifier
+                            .align(alignment = Alignment.TopStart)
+                            .offset(x = 60.dp, y = 500.dp)
+                            .requiredWidth(300.dp)
+                            .requiredHeight(200.dp)
+                            .clip(RoundedCornerShape(30.dp))
+                            .clickable {
+                                // Mostrar diálogo con los detalles de la flor del día
+                                showDialogFlor = true
+                            }
+                    ) {
+                        AsyncImage(
+                            model = flor.imagen,
+                            contentDescription = "Flor del Día",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
                 }
 
                 // Botón de Emergencia
                 Box(
                     modifier = Modifier
                         .align(alignment = Alignment.TopStart)
-                        .offset(x = 52.dp, y = 760.dp)
+                        .offset(x = 35.dp, y = 730.dp)
                         .requiredWidth(340.dp)
                         .requiredHeight(56.dp)
                         .clip(shape = RoundedCornerShape(30.dp))
@@ -282,41 +344,6 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
                             .fillMaxSize()
                             .wrapContentHeight(align = Alignment.CenterVertically)
                     )
-                }
-
-                // Botón de Cerrar Sesión
-                Box(
-                    modifier = Modifier
-                        .offset(x = 349.dp, y = 36.dp)
-                ) {
-                    Surface(
-                        shape = RoundedCornerShape(20.dp),
-                        border = BorderStroke(1.dp, Color(0xffb6b6b6)),
-                        modifier = Modifier
-                            .clip(shape = RoundedCornerShape(20.dp))
-                            .requiredWidth(width = 56.dp)
-                            .requiredHeight(height = 60.dp)
-                    ) {
-                        IconButton(
-                            onClick = {
-                                // Acción de cerrar sesión
-                                FirebaseAuth.getInstance().signOut()
-                                navController?.navigate("login_screen") {
-                                    popUpTo("menu_screen") { inclusive = true }
-                                }
-                            },
-                            modifier = Modifier
-                                .fillMaxSize()
-                        ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.logout),
-                                contentDescription = "Log out",
-                                modifier = Modifier
-                                    .align(alignment = Alignment.Center)
-                                    .requiredSize(size = 37.dp)
-                            )
-                        }
-                    }
                 }
 
                 // Foto de perfil
@@ -424,32 +451,180 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
 
                 // Diálogo de la insignia seleccionada
                 if (showDialogInsignia && selectedInsignia != null) {
+                    val unlocked = isInsigniaUnlocked(selectedInsignia!!.id, user, insigniaRequirements)
                     Dialog(
                         onDismissRequest = { showDialogInsignia = false },
                         properties = DialogProperties(dismissOnBackPress = true)
                     ) {
-                        Box(
+                        Surface(
+                            shape = RoundedCornerShape(30.dp),
+                            border = BorderStroke(3.dp, Color.White),
                             modifier = Modifier
-                                .size(width = 300.dp, height = 300.dp)
-                                .background(Color.White, shape = RoundedCornerShape(20.dp))
+                                .clip(shape = RoundedCornerShape(30.dp))
+                                .requiredWidth(width = 390.dp)
+                                .requiredHeight(height = 390.dp)
                         ) {
-                            val unlocked = isInsigniaUnlocked(selectedInsignia!!.id, user, insigniaRequirements)
-                            val imageUrl = if (unlocked) {
-                                selectedInsignia!!.imagen_d
-                            } else {
-                                selectedInsignia!!.imagen_b
-                            }
-                            AsyncImage(
-                                model = imageUrl,
-                                contentDescription = "insignia",
-                                contentScale = ContentScale.Crop,
+                            Box(
                                 modifier = Modifier
-                                    .fillMaxSize()
-                                    .clip(RoundedCornerShape(20.dp))
-                            )
+                                    .requiredWidth(width = 384.dp)
+                                    .requiredHeight(height = 389.dp)
+                            ) {
+                                // Imagen de la insignia
+                                Box(
+                                    modifier = Modifier
+                                        .align(alignment = Alignment.TopStart)
+                                        .offset(x = 77.dp, y = 10.dp)
+                                        .requiredSize(size = 230.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .requiredSize(size = 230.dp)
+                                    )
+                                    AsyncImage(
+                                        model = if (unlocked) {
+                                            selectedInsignia!!.imagen_d
+                                        } else {
+                                            selectedInsignia!!.imagen_b
+                                        },
+                                        contentDescription = "insignia image",
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier
+                                            .align(alignment = Alignment.TopStart)
+                                            .offset(x = 17.dp, y = 40.dp)
+                                            .requiredWidth(width = 200.dp)
+                                            .requiredHeight(height = 200.dp)
+                                    )
+                                }
+                                // Nombre de la insignia o mensaje de espera
+                                Text(
+                                    text = if (unlocked) selectedInsignia!!.nombre else "Insignia en Espera",
+                                    color = Color(0xff000003),
+                                    textAlign = TextAlign.Center,
+                                    style = TextStyle(
+                                        fontSize = 32.sp,
+                                        fontWeight = FontWeight.Bold
+                                    ),
+                                    modifier = Modifier
+                                        .align(alignment = Alignment.TopStart)
+                                        .offset(x = 25.dp, y = 267.dp)
+                                        .requiredWidth(width = 334.dp)
+                                        .wrapContentHeight(align = Alignment.CenterVertically)
+                                )
+                                // Descripción de la insignia o mensaje de espera
+                                Text(
+                                    text = if (unlocked) selectedInsignia!!.descripcion else "¡Aún no has alcanzado el objetivo! Completa los requisitos para desbloquear esta insignia.",
+                                    color = Color(0xff000003),
+                                    textAlign = TextAlign.Center,
+                                    style = TextStyle(
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Light
+                                    ),
+                                    modifier = Modifier
+                                        .align(alignment = Alignment.TopStart)
+                                        .offset(x = 27.dp, y = 316.dp)
+                                        .requiredWidth(width = 331.dp)
+                                        .wrapContentHeight(align = Alignment.CenterVertically)
+                                )
+                            }
                         }
                     }
                 }
+
+                // Diálogo de la Flor del Día
+                if (showDialogFlor && florDelDia != null) {
+                    Dialog(
+                        onDismissRequest = { showDialogFlor = false },
+                        properties = DialogProperties(dismissOnBackPress = true)
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(30.dp),
+                            color = Color.White,
+                            border = BorderStroke(3.dp, Color.White),
+                            modifier = Modifier
+                                .clip(shape = RoundedCornerShape(30.dp))
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .requiredWidth(width = 384.dp)
+                                    .requiredHeight(height = 494.dp)
+                            ) {
+                                // Imagen de la planta
+                                AsyncImage(
+                                    model = florDelDia!!.imagen,
+                                    contentDescription = "Imagen de la Flor del Día",
+                                    modifier = Modifier
+                                        .align(alignment = Alignment.TopStart)
+                                        .offset(x = 70.dp, y = 28.dp)
+                                        .requiredWidth(width = 250.dp)
+                                        .requiredHeight(height = 190.dp)
+                                        .clip(shape = RoundedCornerShape(60.dp)),
+                                    contentScale = ContentScale.Crop
+                                )
+                                // Título: "Flor del Día"
+                                Text(
+                                    text = "Flor del Día",
+                                    color = Color(0xff000003),
+                                    textAlign = TextAlign.Center,
+                                    style = TextStyle(
+                                        fontSize = 32.sp,
+                                        fontWeight = FontWeight.Bold
+                                    ),
+                                    modifier = Modifier
+                                        .align(alignment = Alignment.TopStart)
+                                        .offset(x = 49.dp, y = 247.dp)
+                                        .requiredWidth(width = 285.dp)
+                                        .wrapContentHeight(align = Alignment.CenterVertically)
+                                )
+                                // Nombre común de la planta
+                                Text(
+                                    text = florDelDia!!.nomComun,
+                                    color = Color(0xff000003),
+                                    textAlign = TextAlign.Center,
+                                    style = TextStyle(
+                                        fontSize = 24.sp,
+                                        fontWeight = FontWeight.Medium
+                                    ),
+                                    modifier = Modifier
+                                        .align(alignment = Alignment.TopStart)
+                                        .offset(x = 50.dp, y = 287.dp)
+                                        .requiredWidth(width = 285.dp)
+                                        .wrapContentHeight(align = Alignment.CenterVertically)
+                                )
+                                // Nombre científico
+                                Text(
+                                    text = florDelDia!!.nomCientifico,
+                                    color = Color(0xff000003),
+                                    fontStyle = FontStyle.Italic,
+                                    textAlign = TextAlign.Center,
+                                    style = TextStyle(
+                                        fontSize = 13.sp
+                                    ),
+                                    modifier = Modifier
+                                        .align(alignment = Alignment.TopStart)
+                                        .offset(x = 50.dp, y = 319.dp)
+                                        .requiredWidth(width = 285.dp)
+                                        .wrapContentHeight(align = Alignment.CenterVertically)
+                                )
+                                // Descripción
+                                Text(
+                                    text = florDelDia!!.descripcion,
+                                    color = Color(0xff000003),
+                                    textAlign = TextAlign.Center,
+                                    style = TextStyle(
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Light
+                                    ),
+                                    modifier = Modifier
+                                        .align(alignment = Alignment.TopStart)
+                                        .offset(x = 50.dp, y = 349.dp)
+                                        .requiredWidth(width = 285.dp)
+                                        .wrapContentHeight(align = Alignment.CenterVertically)
+                                )
+                            }
+                        }
+                    }
+                }
+
             }
         } ?: run {
             // Si no se pudo cargar la información del usuario
@@ -474,5 +649,3 @@ fun isInsigniaUnlocked(insigniaId: String, usuario: Usuario, requirements: List<
         false
     }
 }
-
-

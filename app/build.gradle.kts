@@ -62,10 +62,12 @@ android {
 dependencies {
     implementation(platform("com.google.firebase:firebase-bom:33.5.1"))
     implementation("com.google.firebase:firebase-auth-ktx")
+    implementation("com.google.firebase:firebase-storage-ktx:20.2.0")
     implementation("androidx.core:core-ktx:1.15.0")
     implementation("com.google.firebase:firebase-auth:23.1.0")
     implementation ("com.google.maps.android:maps-ktx:3.4.0")
     implementation("io.coil-kt:coil-compose:2.4.0")
+    implementation ("androidx.activity:activity-compose:1.7.2")
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
@@ -75,6 +77,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.firebase.auth)
+    implementation(libs.firebase.storage.ktx)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
