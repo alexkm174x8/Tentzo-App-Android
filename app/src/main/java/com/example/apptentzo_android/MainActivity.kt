@@ -17,10 +17,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.*
+import androidx.navigation.navArgument
 import com.example.apptentzo_android.ui.Camera.CameraScreen
-import com.example.apptentzo_android.ui.Info.InfoScreen
 import com.example.apptentzo_android.ui.Info.InfoDetails
+import com.example.apptentzo_android.ui.Info.InfoScreen
 import com.example.apptentzo_android.ui.Inicio.Logo
 import com.example.apptentzo_android.ui.Login.Login
 import com.example.apptentzo_android.ui.Map.MapScreen
@@ -71,7 +73,7 @@ fun MainScreen() {
                 modifier = Modifier.padding(innerPadding)
             ) {
                 composable("menu_screen") {
-                    HomeScreen()
+                    HomeScreen(navController)
                 }
                 composable("library_screen") {
                     PlantBank(navController)
@@ -91,8 +93,15 @@ fun MainScreen() {
                         InfoDetails(actividadId = it, navController = navController)
                     }
                 }
-                composable("RouteDetails") {
-                    RouteDetails(navController)
+                // Actualización: RouteDetails ahora recibe rutaId como parámetro
+                composable(
+                    "RouteDetails/{rutaId}",
+                    arguments = listOf(navArgument("rutaId") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val rutaId = backStackEntry.arguments?.getString("rutaId")
+                    rutaId?.let {
+                        RouteDetails(navController = navController, rutaId = it)
+                    }
                 }
                 composable("RouteDisplay") {
                     RouteDisplayContent()
@@ -135,6 +144,7 @@ fun BottomNavigationBar(navController: NavHostController) {
                 if (currentRoute != "menu_screen") {
                     navController.navigate("menu_screen") {
                         popUpTo("menu_screen") { inclusive = true }
+                        launchSingleTop = true
                     }
                 }
             },
@@ -152,6 +162,7 @@ fun BottomNavigationBar(navController: NavHostController) {
                 if (currentRoute != "library_screen") {
                     navController.navigate("library_screen") {
                         popUpTo("library_screen") { inclusive = true }
+                        launchSingleTop = true
                     }
                 }
             },
@@ -169,6 +180,7 @@ fun BottomNavigationBar(navController: NavHostController) {
                 if (currentRoute != "camera_screen") {
                     navController.navigate("camera_screen") {
                         popUpTo("camera_screen") { inclusive = true }
+                        launchSingleTop = true
                     }
                 }
             },
@@ -186,6 +198,7 @@ fun BottomNavigationBar(navController: NavHostController) {
                 if (currentRoute != "map_screen") {
                     navController.navigate("map_screen") {
                         popUpTo("map_screen") { inclusive = true }
+                        launchSingleTop = true
                     }
                 }
             },
@@ -203,6 +216,7 @@ fun BottomNavigationBar(navController: NavHostController) {
                 if (currentRoute != "info_screen") {
                     navController.navigate("info_screen") {
                         popUpTo("info_screen") { inclusive = true }
+                        launchSingleTop = true
                     }
                 }
             },
@@ -216,4 +230,3 @@ fun BottomNavigationBar(navController: NavHostController) {
         )
     }
 }
-

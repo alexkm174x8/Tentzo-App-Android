@@ -1,191 +1,201 @@
 package com.example.apptentzo_android.ui.Map
 
-import android.os.Bundle
-import com.example.apptentzo_android.R
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Divider
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.requiredHeight
-import androidx.compose.foundation.layout.requiredWidth
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Divider
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-
+import coil.compose.AsyncImage
+import com.example.apptentzo_android.R
+import com.example.apptentzo_android.ui.model.Ruta
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
 
 @Composable
-fun RouteDetails(navController: NavHostController, modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .requiredWidth(width = 430.dp)
-            .requiredHeight(height = 932.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .requiredWidth(width = 430.dp)
-                .requiredHeight(height = 932.dp)
-                .clip(shape = RoundedCornerShape(30.dp))
-                .background(color = Color.White)
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.rutafondo),
-                contentDescription = "rutafondo",
-                modifier = modifier
-                    .requiredWidth(width = 430.dp)
-                    .requiredHeight(height = 437.dp)
-                    .offset(y = -40.dp))
-            Text(
-                text = "60 min",
-                color = Color.Black,
-                textAlign = TextAlign.Center,
-                style = TextStyle(
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Light),
-                modifier = Modifier
-                    .align(alignment = Alignment.TopStart)
-                    .offset(x = 278.dp,
-                        y = 444.dp))
-            Text(
-                text = "3 km",
-                color = Color.Black,
-                textAlign = TextAlign.Center,
-                style = TextStyle(
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Light),
-                modifier = Modifier
-                    .align(alignment = Alignment.TopStart)
-                    .offset(x = 62.dp,
-                        y = 444.dp))
-            Text(
-                text = "Distancia:",
-                color = Color.Black,
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.headlineLarge,
-                modifier = Modifier
-                    .align(alignment = Alignment.TopStart)
-                    .offset(x = 28.dp,
-                        y = 398.dp))
-            Text(
-                text = "Tiempo:",
-                color = Color.Black,
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.headlineLarge,
-                modifier = Modifier
-                    .align(alignment = Alignment.TopStart)
-                    .offset(x = 263.dp,
-                        y = 398.dp))
-            Text(
-                text = "Detalles:",
-                color = Color.Black,
-                style = MaterialTheme.typography.headlineLarge,
-                modifier = Modifier
-                    .align(alignment = Alignment.TopStart)
-                    .offset(x = 21.dp,
-                        y = 540.dp)
-                    .requiredWidth(width = 291.dp))
-            Text(
-                text = "Ruta Tentzo",
-                color = Color.White.copy(alpha = 0.89f),
-                textAlign = TextAlign.Center,
-                style = TextStyle(
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold),
-                modifier = Modifier
-                    .align(alignment = Alignment.TopStart)
-                    .offset(x = 79.dp,
-                        y = 52.dp))
-            Text(
-                text = "La ruta Tentzo tiene una longitud de 8 kilómetros. A lo largo del recorrido, podrás disfrutar de una gran variedad de ecosistemas, desde bosques de pinos hasta áreas abiertas con praderas floridas.",
-                color = Color(0xff1e3045),
-                style = TextStyle(
-                    fontSize = 20.sp),
-                modifier = Modifier
-                    .align(alignment = Alignment.TopStart)
-                    .offset(x = 21.dp,
-                        y = 560.dp)
-                    .requiredWidth(width = 380.dp)
-                    .requiredHeight(height = 194.dp)
-                    .wrapContentHeight(align = Alignment.CenterVertically))
+fun RouteDetails(navController: NavHostController, rutaId: String?, modifier: Modifier = Modifier) {
+    var ruta by remember { mutableStateOf<Ruta?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
 
-            Divider(
-                color = Color(0xffd1d1d1),
-                modifier = Modifier
-                    .align(alignment = Alignment.TopStart)
-                    .offset(x = 28.dp,
-                        y = 510.dp)
-                    .requiredWidth(width = 380.dp))
-            Box(
-                modifier = Modifier
-                    .align(alignment = Alignment.TopStart)
-                    .offset(x = 45.dp,
-                        y = 763.dp)
-                    .requiredWidth(width = 340.dp)
-                    .requiredHeight(height = 56.dp)
-                    .clip(shape = RoundedCornerShape(30.dp))
-                    .background(color = Color(0xff7fc297))
-                    .clickable {
-                        navController.navigate("RouteDisplay")
-                    })
-                Text(
-                    text = "Iniciar ruta",
-                    color = Color.White,
-                    textAlign = TextAlign.Center,
-                    style = TextStyle(
-                        fontSize = 36.sp,
-                        fontWeight = FontWeight.Medium
-                    ),
-                    modifier = Modifier
-                        .align(alignment = Alignment.TopStart)
-                        .offset(
-                            x = 81.dp,
-                            y = 773.dp
-                        )
-                        .requiredWidth(width = 267.dp)
-                        .requiredHeight(height = 35.dp)
-                        .wrapContentHeight(align = Alignment.CenterVertically)
-                )
-            Image(
-                painter = painterResource(id = R.drawable.arrow_back),
-                contentDescription = "arrow_back",
-                colorFilter = ColorFilter.tint(Color.White),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(start = 8.dp,
-                        end = 373.dp,
-                        top = 42.dp,
-                        bottom = 831.dp))
+    // Obtener detalles de la ruta desde Firestore
+    LaunchedEffect(rutaId) {
+        if (rutaId != null) {
+            isLoading = true
+            try {
+                val db = FirebaseFirestore.getInstance()
+                val rutaSnapshot = db.collection("Ruta").document(rutaId).get().await()
+                ruta = rutaSnapshot.toObject(Ruta::class.java)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            isLoading = false
         }
-}
+    }
+
+    if (isLoading) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            androidx.compose.material3.CircularProgressIndicator()
+        }
+    } else {
+        ruta?.let { rutaData ->
+            Box(
+                modifier = modifier
+                    .fillMaxSize()
+                    .background(Color.White)
+            ) {
+                // Imagen de fondo de la ruta
+                AsyncImage(
+                    model = rutaData.imagen,
+                    contentDescription = "Imagen de la Ruta",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(400.dp),
+                    contentScale = ContentScale.Crop
+                )
+
+                // Botón de retroceso
+                Image(
+                    painter = painterResource(id = R.drawable.arrow_back),
+                    contentDescription = "arrow_back",
+                    colorFilter = ColorFilter.tint(Color.White),
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .size(32.dp)
+                        .clickable {
+                            navController.popBackStack()
+                        }
+                )
+
+                // Contenido superpuesto
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(top = 350.dp)
+                        .clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp))
+                        .background(Color.White)
+                        .padding(16.dp)
+                ) {
+                    // Nombre de la ruta
+                    Text(
+                        text = rutaData.nombre,
+                        color = Color.Black,
+                        textAlign = TextAlign.Center,
+                        style = TextStyle(
+                            fontSize = 32.sp,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    // Distancia y Tiempo
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = "Distancia:",
+                                color = Color.Black,
+                                style = TextStyle(
+                                    fontSize = 24.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            )
+                            Text(
+                                text = rutaData.distancia,
+                                color = Color.Black,
+                                style = TextStyle(
+                                    fontSize = 24.sp,
+                                    fontWeight = FontWeight.Light
+                                )
+                            )
+                        }
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = "Tiempo:",
+                                color = Color.Black,
+                                style = TextStyle(
+                                    fontSize = 24.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            )
+                            Text(
+                                text = rutaData.tiempo,
+                                color = Color.Black,
+                                style = TextStyle(
+                                    fontSize = 24.sp,
+                                    fontWeight = FontWeight.Light
+                                )
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Divider(color = Color.Gray)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    // Detalles
+                    Text(
+                        text = "Detalles:",
+                        color = Color.Black,
+                        style = TextStyle(
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = rutaData.detalles,
+                        color = Color.DarkGray,
+                        style = TextStyle(
+                            fontSize = 16.sp
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(32.dp))
+                    // Botón para iniciar ruta
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .clip(RoundedCornerShape(30.dp))
+                            .background(color = Color(0xff7fc297))
+                            .clickable {
+                                navController.navigate("RouteDisplay")
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Iniciar ruta",
+                            color = Color.White,
+                            textAlign = TextAlign.Center,
+                            style = TextStyle(
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        )
+                    }
+                }
+            }
+        } ?: run {
+            // Si no se pudo cargar la información de la ruta
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(text = "No se pudo cargar la información de la ruta.", color = Color.Red)
+            }
+        }
+    }
 }
