@@ -1,59 +1,102 @@
 package com.example.apptentzo_android.ui.Info
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Divider
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.example.apptentzo_android.R
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredHeight
-import androidx.compose.foundation.layout.requiredWidth
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Text
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.graphicsLayer
+import com.example.apptentzo_android.ui.model.Actividad
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
 
-class RouteActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            Info()
-        }
-    }
-}
+data class SocialMedia(val name: String, val url: String, val iconRes: Int)
 
 @Composable
-fun InfoScreen() {
+fun InfoScreen(navController: NavController) {
+    // Estado para almacenar las actividades
+    var actividades by remember { mutableStateOf(listOf<Actividad>()) }
 
-    val actividades = listOf("Cenas con Arte", "Taller de barro")
+    // Obtener instancia de Firestore
+    val db = FirebaseFirestore.getInstance()
+
+    // Recuperar actividades desde Firestore
+    LaunchedEffect(Unit) {
+        try {
+            val snapshot = db.collection("Actividad").get().await()
+            actividades = snapshot.documents.mapNotNull { doc ->
+                val id = doc.id
+                val nombre = doc.getString("nombre")
+                val tipo = doc.getString("tipo")
+                val detalles = doc.getString("detalles")
+                val fecha = doc.getString("fecha")
+                val costo = doc.getString("costo")
+                val imagen = doc.getString("imagen")
+                if (nombre != null && imagen != null) {
+                    Actividad(
+                        id = id,
+                        nombre = nombre,
+                        tipo = tipo ?: "",
+                        detalles = detalles ?: "",
+                        fecha = fecha ?: "",
+                        costo = costo ?: "",
+                        imagen = imagen
+                    )
+                } else {
+                    null
+                }
+            }
+        } catch (e: Exception) {
+            // Manejar errores aquí
+            e.printStackTrace()
+        }
+    }
+
+    // Lista de redes sociales
+    val redesSociales = listOf(
+        SocialMedia(
+            name = "Instagram",
+            url = "https://www.instagram.com/ocoyucanvidayconservacion/",
+            iconRes = R.drawable.insta
+        ),
+        SocialMedia(
+            name = "Facebook",
+            url = "https://www.facebook.com/ocoyucanvidayconservacion?mibextid=ZbWKwL",
+            iconRes = R.drawable.face
+        ),
+        SocialMedia(
+            name = "X",
+            url = "https://x.com/OcoyucanVYCAC/status/1849957105748373512",
+            iconRes = R.drawable.x
+        ),
+        SocialMedia(
+            name = "Página Oficial",
+            url = "https://www.ocoyucan.com/",
+            iconRes = R.drawable.oco
+        ),
+        SocialMedia(
+            name = "YouTube",
+            url = "https://www.youtube.com/@OcoyucanVidayConservacionA.C.?app=desktop",
+            iconRes = R.drawable.youtube
+        )
+    )
 
     Column(
         modifier = Modifier
@@ -62,6 +105,7 @@ fun InfoScreen() {
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.Start
     ) {
+        // Sección de Redes Sociales
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -83,92 +127,22 @@ fun InfoScreen() {
                 thickness = 1.dp
             )
         }
-        Row(modifier = Modifier
-            .fillMaxWidth()
-            .padding(25.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-            ) {
-            Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .clip(RoundedCornerShape(30.dp))
-                    .background(color = Color(0xffE9F4CA))
-                    .padding(16.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Button(
-                    onClick = {
 
-                    },
-                    modifier = Modifier
-                        .size(68.dp)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.face),
-                        contentDescription = "Menu Icon",
-                        modifier = Modifier
-                            .requiredWidth(70.dp)
-                            .requiredHeight(70.dp)
-                    )
-                }
+        // Iconos de Redes Sociales en LazyRow
+        LazyRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            items(redesSociales) { redSocial ->
+                SocialIcon(redSocial)
             }
-
-
-            Spacer(modifier = Modifier.width(25.dp))
-            Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .clip(RoundedCornerShape(30.dp))
-                    .background(color = Color(0xffE9F4CA))
-                    .padding(16.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Button(
-                    onClick = {
-
-                    },
-                    modifier = Modifier
-                        .size(68.dp)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.insta),
-                        contentDescription = "Menu Icon",
-                        modifier = Modifier
-                            .requiredWidth(70.dp)
-                            .requiredHeight(70.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.width(25.dp))
-
-            Box(
-                modifier = Modifier
-                    .size(100.dp)
-                    .clip(RoundedCornerShape(30.dp))
-                    .background(color = Color(0xffE9F4CA))
-                    .padding(16.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Button(
-                    onClick = {
-
-                    },
-                    modifier = Modifier
-                        .size(68.dp)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.x),
-                        contentDescription = "Menu Icon",
-                        modifier = Modifier
-                            .requiredWidth(70.dp)
-                            .requiredHeight(70.dp)
-                    )
-                }
-            }
-
         }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Sección de Más Actividades
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -190,50 +164,72 @@ fun InfoScreen() {
                 thickness = 1.dp
             )
         }
-       //
-        Column(
+
+        // Lista de Actividades
+        LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .offset(x= 15.dp, y = 20.dp)
-
+                .padding(horizontal = 15.dp, vertical = 20.dp)
         ) {
-            for (actividad in actividades) {
-                Box(
-                    modifier = Modifier
-                        .height(100.dp)
-                        .width(400.dp)
-                        .padding(10.dp)
-                        .clickable {
-                        }
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.actividadifo),
-                        contentDescription = "Fondo de Actividad",
-                        modifier = Modifier
-                            .requiredWidth(width = 400.dp)
-                            .requiredHeight(height = 150.dp)
-                            .clip(shape = RoundedCornerShape(20.dp))
-                    )
-
-                    Text(
-                        text = actividad,
-                        color = Color.White,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.align(Alignment.BottomStart)
-                            .offset(x= 20.dp, y = 20.dp),
-                    )
+            items(actividades) { actividad ->
+                ActividadItem(actividad) {
+                    navController.navigate("InfoDetails/${actividad.id}")
                 }
-                Spacer(modifier = Modifier.height(70.dp))
             }
         }
-
     }
 }
 
-
-@Preview(showBackground = true, heightDp = 932, widthDp = 430)
 @Composable
-fun Info() {
-    InfoScreen()
+fun ActividadItem(actividad: Actividad, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(150.dp)
+            .padding(vertical = 10.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .clickable { onClick() },
+        contentAlignment = Alignment.BottomStart
+    ) {
+        // Cargar imagen desde URL usando Coil
+        AsyncImage(
+            model = actividad.imagen,
+            contentDescription = "Fondo de Actividad",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(RoundedCornerShape(20.dp))
+        )
+        Text(
+            text = actividad.nombre,
+            color = Color.White,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier
+                .padding(20.dp)
+        )
+    }
+}
+
+@Composable
+fun SocialIcon(socialMedia: SocialMedia) {
+    val context = LocalContext.current
+    Box(
+        modifier = Modifier
+            .size(70.dp)
+            .clip(RoundedCornerShape(15.dp))
+            .background(color = Color(0xffE9F4CA))
+            .clickable {
+                // Abrir el enlace correspondiente
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(socialMedia.url))
+                context.startActivity(intent)
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            painter = painterResource(id = socialMedia.iconRes),
+            contentDescription = socialMedia.name,
+            modifier = Modifier.size(40.dp)
+        )
+    }
 }
