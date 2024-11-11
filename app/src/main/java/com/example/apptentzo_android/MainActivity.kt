@@ -78,6 +78,16 @@ fun MainScreen() {
                 composable("library_screen") {
                     PlantBank(navController)
                 }
+                composable("library_screen") {
+                    PlantBank(navController = navController)
+                }
+                composable(
+                    route = "plant_details_screen/{plantaId}",
+                    arguments = listOf(navArgument("plantaId") { type = NavType.StringType })
+                ) { backStackEntry ->
+                    val plantaId = backStackEntry.arguments?.getString("plantaId") ?: ""
+                    PlantInfo(navController = navController, plantaId = plantaId)
+                }
                 composable("camera_screen") {
                     CameraScreen()
                 }
@@ -106,10 +116,7 @@ fun MainScreen() {
                 composable("RouteDisplay") {
                     RouteDisplayContent()
                 }
-                composable("plant_details_screen/{plantId}") { backStackEntry ->
-                    val plantId = backStackEntry.arguments?.getString("plantId")
-                    // Implementa la lógica para la pantalla de detalles de la planta
-                }
+
             }
         }
     } else {

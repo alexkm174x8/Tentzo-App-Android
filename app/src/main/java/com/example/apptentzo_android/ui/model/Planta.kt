@@ -5,5 +5,6 @@ data class Planta(
     val nomComun: String = "",
     val nomCientifico: String = "",
     val descripcion: String = "",
+    val sinonimo: String = "",
     val imagen: String = ""
 )
