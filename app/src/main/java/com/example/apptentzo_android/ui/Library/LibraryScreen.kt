@@ -85,7 +85,8 @@ fun PlantBank(navController: NavHostController) {
         plantasList
     } else {
         plantasList.filter { planta ->
-            planta.nomComun.contains(text, ignoreCase = true) ||
+            val nombreParaBusqueda = if (planta.nomComun.isNotEmpty()) planta.nomComun else planta.nomCientifico
+            nombreParaBusqueda.contains(text, ignoreCase = true) ||
                     planta.nomCientifico.contains(text, ignoreCase = true) ||
                     planta.sinonimo.contains(text, ignoreCase = true)
         }
@@ -116,7 +117,7 @@ fun PlantBank(navController: NavHostController) {
         // Barra de búsqueda
         Box(
             modifier = Modifier
-                .offset(x = 18.dp, y = 113.dp)
+                .offset(x = 10.dp, y = 113.dp)
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
                 .height(54.dp)
@@ -188,6 +189,12 @@ fun PlantBank(navController: NavHostController) {
 
 @Composable
 fun PlantItem(planta: Planta, navController: NavHostController) {
+    val nombreMostrar = when {
+        planta.nomComun.isNotEmpty() -> planta.nomComun
+        planta.nomCientifico.isNotEmpty() -> planta.nomCientifico
+        else -> planta.sinonimo
+    }
+
     Column(
         modifier = Modifier
             .requiredWidth(109.dp)
@@ -206,7 +213,7 @@ fun PlantItem(planta: Planta, navController: NavHostController) {
         ) {
             AsyncImage(
                 model = planta.imagen,
-                contentDescription = planta.nomComun,
+                contentDescription = nombreMostrar,
                 modifier = Modifier
                     .requiredWidth(92.dp)
                     .requiredHeight(93.dp)
@@ -215,7 +222,7 @@ fun PlantItem(planta: Planta, navController: NavHostController) {
             )
         }
         Text(
-            text = planta.nomComun,
+            text = nombreMostrar,
             color = Color(0xff121d29),
             style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium),
             modifier = Modifier

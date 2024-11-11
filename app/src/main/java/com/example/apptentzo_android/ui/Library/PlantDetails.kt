@@ -58,7 +58,6 @@ fun PlantInfo(
                 val nomCientifico = doc.getString("nomCientifico") ?: ""
                 val descripcion = doc.getString("descripcion") ?: ""
                 val imagen = doc.getString("imagen") ?: ""
-                val fuente = doc.getString("fuente") ?: ""
                 planta = Planta(
                     id = id,
                     nomComun = nomComun,
@@ -170,18 +169,7 @@ fun PlantInfo(
                         .wrapContentHeight(align = Alignment.CenterVertically)
                 )
             }
-            Text(
-                text = "Fuente consultada",
-                color = Color.Black,
-                style = TextStyle(
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                ),
-                modifier = Modifier
-                    .offset(x = 30.dp, y = 739.dp)
-                    .requiredWidth(308.dp)
-                    .wrapContentHeight(align = Alignment.CenterVertically)
-            )
+
         }
     } else {
         // Mostrar mensaje de error si la planta no existe
