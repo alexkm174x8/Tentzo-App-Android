@@ -6,6 +6,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,6 +33,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.AlertDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -58,14 +60,14 @@ import coil.compose.AsyncImage
 import com.example.apptentzo_android.R
 import com.example.apptentzo_android.ui.model.Insignia
 import com.example.apptentzo_android.ui.model.InsigniaRequirement
+import com.example.apptentzo_android.ui.model.Parameter
 import com.example.apptentzo_android.ui.model.Planta
 import com.example.apptentzo_android.ui.model.Usuario
-import com.example.apptentzo_android.ui.model.WeatherRepository
-import com.example.apptentzo_android.ui.model.MeteoResponse
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlin.random.Random // Import necesario para generar valores aleatorios
 
 @Composable
 fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifier) {
@@ -84,39 +86,29 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
     var florDelDia by remember { mutableStateOf<Planta?>(null) }
     var isLoading by remember { mutableStateOf(true) }
 
-    // Variables de estado para el clima
-    var weatherResponse by remember { mutableStateOf<MeteoResponse?>(null) }
+    // Variables para el clima aleatorio
+    var randomTemperature by remember { mutableStateOf(0) }
+    var randomWeatherDescription by remember { mutableStateOf("") }
     var isWeatherLoading by remember { mutableStateOf(true) }
-    var weatherError by remember { mutableStateOf<String?>(null) }
 
-    // Crear una instancia del repositorio
-    val weatherRepository = remember { WeatherRepository() }
-
-    // Obtener el clima de la Sierra Tentzo
+    // Generar temperatura y estado del clima aleatorios
     LaunchedEffect(Unit) {
         isWeatherLoading = true
-        try {
-            // Definir las fechas y coordenadas
-            // Definir las fechas en formato UTC
-            val startDate = "2024-11-10T20:40:00Z"
-            val endDate = "2024-11-30T20:40:00Z"
+        // Generar temperatura aleatoria entre un rango (por ejemplo, 15°C a 35°C)
+        randomTemperature = Random.nextInt(15, 36)
 
-            val timeStep = "PT10M"
-            val latitude = 18.9296223
-            val longitude = -98.292414
-
-            weatherResponse = weatherRepository.getWeatherData(
-                startDate = startDate,
-                endDate = endDate,
-                timeStep = timeStep,
-                latitude = latitude,
-                longitude = longitude
-            )
-            weatherError = null
-        } catch (e: Exception) {
-            e.printStackTrace()
-            weatherError = "No se pudo obtener el clima."
-        }
+        // Lista de posibles estados del clima
+        val weatherDescriptions = listOf(
+            "Cielo Despejado",
+            "Nubes Parciales",
+            "Neblina",
+            "Llovizna",
+            "Lluvia",
+            "Tormenta",
+            "Nieve"
+        )
+        // Seleccionar una descripción aleatoria
+        randomWeatherDescription = weatherDescriptions.random()
         isWeatherLoading = false
     }
 
@@ -284,89 +276,67 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
                     }
                 }
 
-                // Imagen del clima
-                Image(
-                    painter = painterResource(id = R.drawable.sol),
-                    contentDescription = "sol",
-                    modifier = Modifier
-                        .align(alignment = Alignment.TopStart)
-                        .offset(
-                            x = 184.dp,
-                            y = 103.dp
-                        )
-                        .requiredWidth(width = 87.dp)
-                        .requiredHeight(height = 85.dp)
-                )
-
                 // Temperatura y Estado del Clima
                 if (isWeatherLoading) {
                     // Mostrar indicador de carga para el clima
                     Box(
                         modifier = Modifier
                             .align(Alignment.TopStart)
-                            .offset(x = 200.dp, y = 100.dp)
+                            .offset(x = 180.dp, y = 170.dp)
                             .size(50.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(color = Color(0xff2e354d), strokeWidth = 3.dp)
+
                     }
-                } else if (weatherError != null) {
-                    // Mostrar mensaje de error
-                    Text(
-                        text = weatherError!!,
-                        color = Color.Red,
+                } else {
+                    // Mostrar la información del clima aleatorio
+                    Row(
                         modifier = Modifier
                             .align(alignment = Alignment.TopStart)
-                            .offset(x = 200.dp, y = 170.dp)
-                    )
-                } else {
-                    weatherResponse?.let { weather ->
-                        // Mostrar la información del clima
-                        Row(
+                            .offset(x = 170.dp, y = 100.dp)
+                            .background(
+                                color = Color.White,
+                                shape = RoundedCornerShape(10.dp)
+                            )
+                            .padding(8.dp)
+                    ) {
+                        // Icono del clima (puedes usar un ícono genérico o basado en la descripción)
+                        val iconResource = when (randomWeatherDescription) {
+                            "Cielo Despejado" -> R.drawable.ic_clear_sky
+                            "Nubes Parciales" -> R.drawable.ic_partly_cloudy
+                            "Neblina" -> R.drawable.ic_fog
+                            "Llovizna" -> R.drawable.ic_drizzle
+                            "Lluvia" -> R.drawable.ic_rain
+                            "Tormenta" -> R.drawable.ic_thunderstorm
+                            "Nieve" -> R.drawable.ic_snow
+                            else -> R.drawable.ic_unknow
+                        }
+                        Image(
+                            painter = painterResource(id = iconResource),
+                            contentDescription = "Icono del Clima",
                             modifier = Modifier
-                                .align(alignment = Alignment.TopStart)
-                                .offset(x = 200.dp, y = 170.dp)
-                                .background(
-                                    color = Color(0xfff0f0f0),
-                                    shape = RoundedCornerShape(10.dp)
-                                )
-                                .padding(8.dp)
-                        ) {
-                            // Icono del clima
-                            if (weather.properties.timeseries.isNotEmpty() && weather.properties.timeseries[0].parameters.isNotEmpty()) {
-                                val weatherCodeParam = weather.properties.timeseries[0].parameters.find { it.name == "weather_code:code" }
-                                val weatherCode = weatherCodeParam?.values?.firstOrNull()?.toInt() ?: 0
-                                val iconUrl = getWeatherIconUrl(weatherCode)
-                                AsyncImage(
-                                    model = iconUrl,
-                                    contentDescription = "Icono del Clima",
-                                    modifier = Modifier
-                                        .size(50.dp)
-                                        .clip(RoundedCornerShape(8.dp)),
-                                    contentScale = ContentScale.Crop
-                                )
-                            }
+                                .size(100.dp)
+                                .offset(x= 0.dp, y = -10.dp)
+                                .clip(RoundedCornerShape(8.dp)),
+                            contentScale = ContentScale.Crop
+                        )
 
-                            Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
 
-                            // Información del clima
-                            Column {
-                                val tempParam = weather.properties.timeseries[0].parameters.find { it.name == "t_2m:C" }
-                                val temp = tempParam?.values?.firstOrNull()?.toInt() ?: "N/A"
-                                Text(
-                                    text = "$temp °C",
-                                    color = Color(0xff2e354d),
-                                    fontSize = 24.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                val weatherDescription = getWeatherDescription(weather.properties.timeseries[0].parameters)
-                                Text(
-                                    text = weatherDescription,
-                                    color = Color(0xff2e354d),
-                                    fontSize = 16.sp,
-                                    fontStyle = FontStyle.Italic
-                                )
-                            }
+                        // Información del clima
+                        Column {
+                            Text(
+                                text = "$randomTemperature °C",
+                                color = Color(0xff2e354d),
+                                fontSize = 40.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = randomWeatherDescription,
+                                color = Color(0xff2e354d),
+                                fontSize = 16.sp,
+                                fontStyle = FontStyle.Italic
+                            )
                         }
                     }
                 }
@@ -575,10 +545,6 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
                                         .offset(x = 77.dp, y = 10.dp)
                                         .requiredSize(size = 230.dp)
                                 ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .requiredSize(size = 230.dp)
-                                    )
                                     AsyncImage(
                                         model = if (unlocked) {
                                             selectedInsignia!!.imagen_d
@@ -746,48 +712,5 @@ fun isInsigniaUnlocked(insigniaId: String, usuario: Usuario, requirements: List<
         userCount >= requirement.requiredCount
     } else {
         false
-    }
-}
-
-// Función para obtener la URL del icono del clima basado en el código de clima
-fun getWeatherIconUrl(weatherCode: Int): String {
-    // Puedes mapear los códigos de Meteomatics a iconos personalizados o usar iconos de OpenWeatherMap
-    // Aquí usaremos iconos de OpenWeatherMap como ejemplo
-    // Consulta: https://openweathermap.org/weather-conditions
-    return when (weatherCode) {
-        0 -> "https://openweathermap.org/img/wn/01d@2x.png" // Clear sky
-        1, 2, 3 -> "https://openweathermap.org/img/wn/02d@2x.png" // Few/Scattered/Broken clouds
-        45, 48 -> "https://openweathermap.org/img/wn/50d@2x.png" // Mist
-        51, 53, 55 -> "https://openweathermap.org/img/wn/09d@2x.png" // Drizzle
-        56, 57 -> "https://openweathermap.org/img/wn/09d@2x.png" // Freezing Drizzle
-        61, 63, 65 -> "https://openweathermap.org/img/wn/10d@2x.png" // Rain
-        66, 67 -> "https://openweathermap.org/img/wn/10d@2x.png" // Freezing Rain
-        71, 73, 75, 77 -> "https://openweathermap.org/img/wn/13d@2x.png" // Snow
-        80, 81, 82 -> "https://openweathermap.org/img/wn/10d@2x.png" // Rain showers
-        85, 86 -> "https://openweathermap.org/img/wn/13d@2x.png" // Snow showers
-        95 -> "https://openweathermap.org/img/wn/11d@2x.png" // Thunderstorm
-        96, 99 -> "https://openweathermap.org/img/wn/11d@2x.png" // Thunderstorm with hail
-        else -> "https://openweathermap.org/img/wn/01d@2x.png" // Default
-    }
-}
-
-// Función para obtener una descripción del clima basada en los parámetros
-fun getWeatherDescription(parameters: List<com.example.apptentzo_android.ui.model.Parameter>): String {
-    val weatherCodeParam = parameters.find { it.name == "weather_code:code" }
-    val weatherCode = weatherCodeParam?.values?.firstOrNull()?.toInt() ?: 0
-    return when (weatherCode) {
-        0 -> "Cielo Despejado"
-        1, 2, 3 -> "Nubes Parciales"
-        45, 48 -> "Neblina"
-        51, 53, 55 -> "Llovizna"
-        56, 57 -> "Llovizna Helada"
-        61, 63, 65 -> "Lluvia"
-        66, 67 -> "Lluvia Helada"
-        71, 73, 75, 77 -> "Nieve"
-        80, 81, 82 -> "Chubascos de Lluvia"
-        85, 86 -> "Chubascos de Nieve"
-        95 -> "Tormenta"
-        96, 99 -> "Tormenta con Granizo"
-        else -> "Estado Desconocido"
     }
 }
