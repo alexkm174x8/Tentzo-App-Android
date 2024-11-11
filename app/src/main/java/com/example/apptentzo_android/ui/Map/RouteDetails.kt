@@ -76,7 +76,7 @@ fun RouteDetails(navController: NavHostController, rutaId: String?, modifier: Mo
                     colorFilter = ColorFilter.tint(Color.White),
                     modifier = Modifier
                         .padding(16.dp)
-                        .size(32.dp)
+                        .size(60.dp)
                         .clickable {
                             navController.popBackStack()
                         }

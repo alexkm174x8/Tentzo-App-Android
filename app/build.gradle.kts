@@ -20,8 +20,13 @@ android {
             useSupportLibrary = true
         }
 
+
+        buildConfigField("String", "METEOMATICS_USERNAME", "\"${project.findProperty("METEOMATICS_USERNAME") ?: ""}\"")
+        buildConfigField("String", "METEOMATICS_PASSWORD", "\"${project.findProperty("METEOMATICS_PASSWORD") ?: ""}\"")
+
         // Using manifest placeholders for the API key
         manifestPlaceholders["com.google.android.geo.API_KEY"] = findProperty("MAPS_API_KEY") as String
+
     }
 
     buildTypes {
@@ -68,6 +73,20 @@ dependencies {
     implementation ("com.google.maps.android:maps-ktx:3.4.0")
     implementation("io.coil-kt:coil-compose:2.4.0")
     implementation ("androidx.activity:activity-compose:1.7.2")
+    // Retrofit para realizar solicitudes HTTP
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    // Converter para JSON usando Gson
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    // Coroutines para manejar tareas asíncronas
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
+    // Coil para cargar imágenes
+    implementation("io.coil-kt:coil-compose:2.1.0")
+    // OkHttp para manejo de autenticación básica
+    implementation("com.squareup.okhttp3:okhttp:4.10.0")
+    // Interceptor de logging para OkHttp
+    implementation("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.2")
+
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
