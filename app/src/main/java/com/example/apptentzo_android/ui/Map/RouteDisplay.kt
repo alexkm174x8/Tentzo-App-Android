@@ -10,8 +10,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
-import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.PolylineOptions
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.maps.android.ktx.awaitMap
@@ -23,41 +23,54 @@ class RouteDisplay : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            RouteDisplayContent()
+            RouteDisplayContent(idRuta = 1)
         }
     }
 }
 
 @Composable
-fun RouteDisplayContent() {
-    // Componente de mapa que mostrará la ruta
+fun RouteDisplayContent(idRuta: Int) {
     val mapView = rememberMapViewWithLifecycle()
     val coroutineScope = rememberCoroutineScope()
 
-    AndroidView(factory = { mapView }) { androidMapView -> // Renombrado a androidMapView
+    AndroidView(factory = { mapView }) { androidMapView ->
         coroutineScope.launch {
-            val googleMap = androidMapView.awaitMap()  // Usamos androidMapView en lugar de mapView
-            fetchRouteFromFirebase { routePoints ->
-                drawRouteOnMap(googleMap, routePoints)
+            val googleMap = androidMapView.awaitMap()
+            fetchRouteFromFirebase(idRuta) { routePoints ->
+                if (routePoints.isNotEmpty()) {
+                    drawRouteOnMap(googleMap, routePoints)
+                } else {
+                    Log.e("RouteDisplay", "No se encontraron puntos de ruta con id_ruta = $idRuta")
+                }
             }
         }
     }
 }
 
-// Función para recuperar las coordenadas desde Firebase
-private fun fetchRouteFromFirebase(onRouteReady: (List<LatLng>) -> Unit) {
+// Función para recuperar las coordenadas desde Firebase e imprimirlas en Logcat
+private fun fetchRouteFromFirebase(idRuta: Int, onRouteReady: (List<LatLng>) -> Unit) {
     val db = FirebaseFirestore.getInstance()
-    val rutaCollection = db.collection("Coordenadas") // Cambia "tus_colecciones" por el nombre real de tu colección
+    val rutaCollection = db.collection("Coordenada")
 
-    // Consulta solo los documentos con id_ruta = 1
-    rutaCollection.whereEqualTo("id_ruta", 1).get()
+    // Aplicar el filtro id_ruta = idRuta dinámicamente y ordenar por id ascendente
+    rutaCollection.whereEqualTo("id_ruta", idRuta)
+        .orderBy("id")
+        .get()
         .addOnSuccessListener { documents ->
-            val routePoints = documents.mapNotNull { document ->
-                val lat = document.getDouble("latitud") ?: return@mapNotNull null
-                val lng = document.getDouble("longitud") ?: return@mapNotNull null
-                LatLng(lat, lng)
+            if (documents.isEmpty) {
+                Log.e("RouteDisplay", "No se obtuvieron puntos de ruta para id_ruta = $idRuta")
+            } else {
+                for (document in documents) {
+                    Log.d("RouteDisplay", "Documento encontrado: ${document.data}")
+                }
+
+                val routePoints = documents.mapNotNull { document ->
+                    val lat = document.getDouble("latitud") ?: return@mapNotNull null
+                    val lng = document.getDouble("longitud") ?: return@mapNotNull null
+                    LatLng(lat, lng)
+                }
+                onRouteReady(routePoints)
             }
-            onRouteReady(routePoints)
         }
         .addOnFailureListener { exception ->
             Log.e("RouteDisplay", "Error al obtener documentos", exception)
@@ -67,15 +80,19 @@ private fun fetchRouteFromFirebase(onRouteReady: (List<LatLng>) -> Unit) {
 // Función para dibujar la ruta en el mapa
 private fun drawRouteOnMap(map: GoogleMap, routePoints: List<LatLng>) {
     if (routePoints.isNotEmpty()) {
-        // Centrar la cámara en el primer punto
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom(routePoints.first(), 15f))
-
-        // Configurar y agregar la línea de la ruta
         val polylineOptions = PolylineOptions()
             .addAll(routePoints)
             .color(android.graphics.Color.BLUE)
             .width(5f)
         map.addPolyline(polylineOptions)
+
+        // Configuración de límites para centrar la ruta en la cámara
+        val boundsBuilder = LatLngBounds.Builder()
+        routePoints.forEach { boundsBuilder.include(it) }
+        val bounds = boundsBuilder.build()
+
+        map.moveCamera(CameraUpdateFactory.newLatLngBounds(bounds, 100))
+        Log.d("RouteDisplay", "Cámara centrada en la ruta.")
     }
 }
 
@@ -95,5 +112,5 @@ fun rememberMapViewWithLifecycle(): MapView {
 @Preview(showBackground = true)
 @Composable
 fun PreviewRouteDisplay() {
-    RouteDisplayContent()
+    RouteDisplayContent(idRuta = 1)
 }
