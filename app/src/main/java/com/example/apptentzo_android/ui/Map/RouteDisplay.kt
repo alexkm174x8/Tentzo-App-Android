@@ -1,12 +1,12 @@
+// RouteDisplayContent.kt
+
 package com.example.apptentzo_android.ui.Map
 
 import android.os.Bundle
 import android.util.Log
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
@@ -17,58 +17,78 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.maps.android.ktx.awaitMap
 import kotlinx.coroutines.launch
 import androidx.compose.ui.viewinterop.AndroidView
-import com.example.apptentzo_android.R
-
-class RouteDisplay : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            RouteDisplayContent(idRuta = 1)
-        }
-    }
-}
+import com.example.apptentzo_android.ui.model.Ruta
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 
 @Composable
-fun RouteDisplayContent(idRuta: Int) {
+fun RouteDisplayContent(rutaId: String?) {
     val mapView = rememberMapViewWithLifecycle()
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+    var isRouteLoading by remember { mutableStateOf(true) }
+
+    // Agregar un log para verificar el rutaId recibido
+    Log.d("RouteDisplay", "Ruta ID recibido: $rutaId")
 
     AndroidView(factory = { mapView }) { androidMapView ->
         coroutineScope.launch {
             val googleMap = androidMapView.awaitMap()
-            fetchRouteFromFirebase(idRuta) { routePoints ->
-                if (routePoints.isNotEmpty()) {
-                    drawRouteOnMap(googleMap, routePoints)
-                } else {
-                    Log.e("RouteDisplay", "No se encontraron puntos de ruta con id_ruta = $idRuta")
+            rutaId?.let { rutaId ->
+                Log.d("RouteDisplay", "Fetching route for id_ruta = $rutaId")
+                fetchRouteFromFirebase(rutaId) { routePoints ->
+                    if (routePoints.isNotEmpty()) {
+                        Log.d("RouteDisplay", "Route Points: $routePoints")
+                        drawRouteOnMap(googleMap, routePoints)
+                        isRouteLoading = false
+                    } else {
+                        Log.e("RouteDisplay", "No se encontraron puntos de ruta con id_ruta = $rutaId")
+                        isRouteLoading = false
+                    }
                 }
+            } ?: run {
+                Log.e("RouteDisplay", "rutaId es nulo")
+                isRouteLoading = false
             }
+        }
+    }
+
+    // Mostrar indicador de carga mientras se dibuja la ruta
+    if (isRouteLoading) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.3f)),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(color = Color.White)
         }
     }
 }
 
-// Función para recuperar las coordenadas desde Firebase e imprimirlas en Logcat
-private fun fetchRouteFromFirebase(idRuta: Int, onRouteReady: (List<LatLng>) -> Unit) {
+// Función para recuperar las coordenadas desde Firestore e imprimirlas en Logcat
+private fun fetchRouteFromFirebase(rutaId: String, onRouteReady: (List<LatLng>) -> Unit) {
     val db = FirebaseFirestore.getInstance()
     val rutaCollection = db.collection("Coordenada")
 
-    // Aplicar el filtro id_ruta = idRuta dinámicamente y ordenar por id ascendente
-    rutaCollection.whereEqualTo("id_ruta", idRuta)
+    // Aplicar el filtro id_ruta = rutaId dinámicamente y ordenar por id ascendente
+    rutaCollection.whereEqualTo("id_ruta", rutaId)
         .orderBy("id")
         .get()
         .addOnSuccessListener { documents ->
             if (documents.isEmpty) {
-                Log.e("RouteDisplay", "No se obtuvieron puntos de ruta para id_ruta = $idRuta")
+                Log.e("RouteDisplay", "No se obtuvieron puntos de ruta para id_ruta = $rutaId")
             } else {
-                for (document in documents) {
-                    Log.d("RouteDisplay", "Documento encontrado: ${document.data}")
-                }
-
                 val routePoints = documents.mapNotNull { document ->
                     val lat = document.getDouble("latitud") ?: return@mapNotNull null
                     val lng = document.getDouble("longitud") ?: return@mapNotNull null
                     LatLng(lat, lng)
                 }
+                Log.d("RouteDisplay", "Route Points: $routePoints")
                 onRouteReady(routePoints)
             }
         }
@@ -107,10 +127,4 @@ fun rememberMapViewWithLifecycle(): MapView {
         onDispose { mapView.onPause() }
     }
     return mapView
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewRouteDisplay() {
-    RouteDisplayContent(idRuta = 1)
 }

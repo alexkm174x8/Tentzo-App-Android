@@ -175,7 +175,7 @@ fun RouteDetails(navController: NavHostController, rutaId: String?, modifier: Mo
                             .clip(RoundedCornerShape(30.dp))
                             .background(color = Color(0xff7fc297))
                             .clickable {
-                                navController.navigate("RouteDisplay")
+                                navController.navigate("RouteDisplay/${rutaId}")
                             },
                         contentAlignment = Alignment.Center
                     ) {
