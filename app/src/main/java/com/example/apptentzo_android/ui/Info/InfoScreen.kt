@@ -2,8 +2,10 @@ package com.example.apptentzo_android.ui.Info
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
@@ -17,7 +19,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -26,18 +30,15 @@ import com.example.apptentzo_android.R
 import com.example.apptentzo_android.ui.model.Actividad
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
+import com.google.firebase.auth.FirebaseAuth
 
 data class SocialMedia(val name: String, val url: String, val iconRes: Int)
 
 @Composable
 fun InfoScreen(navController: NavController) {
-    // Estado para almacenar las actividades
     var actividades by remember { mutableStateOf(listOf<Actividad>()) }
-
-    // Obtener instancia de Firestore
     val db = FirebaseFirestore.getInstance()
 
-    // Recuperar actividades desde Firestore
     LaunchedEffect(Unit) {
         try {
             val snapshot = db.collection("Actividad").get().await()
@@ -59,126 +60,149 @@ fun InfoScreen(navController: NavController) {
                         costo = costo ?: "",
                         imagen = imagen
                     )
-                } else {
-                    null
-                }
+                } else null
             }
         } catch (e: Exception) {
-            // Manejar errores aquí
             e.printStackTrace()
         }
     }
 
-    // Lista de redes sociales
     val redesSociales = listOf(
-        SocialMedia(
-            name = "Instagram",
-            url = "https://www.instagram.com/ocoyucanvidayconservacion/",
-            iconRes = R.drawable.insta
-        ),
-        SocialMedia(
-            name = "Facebook",
-            url = "https://www.facebook.com/ocoyucanvidayconservacion?mibextid=ZbWKwL",
-            iconRes = R.drawable.face
-        ),
-        SocialMedia(
-            name = "X",
-            url = "https://x.com/OcoyucanVYCAC/status/1849957105748373512",
-            iconRes = R.drawable.x
-        ),
-        SocialMedia(
-            name = "Página Oficial",
-            url = "https://www.ocoyucan.com/",
-            iconRes = R.drawable.oco
-        ),
-        SocialMedia(
-            name = "YouTube",
-            url = "https://www.youtube.com/@OcoyucanVidayConservacionA.C.?app=desktop",
-            iconRes = R.drawable.youtube
-        )
+        SocialMedia("Instagram", "https://www.instagram.com/ocoyucanvidayconservacion/", R.drawable.insta),
+        SocialMedia("Facebook", "https://www.facebook.com/ocoyucanvidayconservacion?mibextid=ZbWKwL", R.drawable.face),
+        SocialMedia("X", "https://x.com/OcoyucanVYCAC/status/1849957105748373512", R.drawable.x),
+        SocialMedia("Página Oficial", "https://www.ocoyucan.com/", R.drawable.oco),
+        SocialMedia("YouTube", "https://www.youtube.com/@OcoyucanVidayConservacionA.C.?app=desktop", R.drawable.youtube)
     )
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(top = 20.dp),
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.Start
+        verticalArrangement = Arrangement.SpaceBetween // Para organizar contenido y botón "Cerrar Sesión"
     ) {
-        // Sección de Redes Sociales
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier.weight(1f) // Permite que el contenido ocupe espacio y empuja el botón hacia abajo
         ) {
-            Text(
-                text = "Redes Sociales",
-                fontWeight = FontWeight.Bold,
-                color = Color.Black,
-                fontSize = 25.sp,
-                modifier = Modifier.padding(20.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Divider(
-                modifier = Modifier
-                    .height(1.dp)
-                    .weight(1f)
-                    .padding(end = 10.dp),
-                color = Color.Gray,
-                thickness = 1.dp
-            )
-        }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Redes Sociales",
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black,
+                    fontSize = 25.sp,
+                    modifier = Modifier.padding(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Divider(
+                    modifier = Modifier
+                        .height(1.dp)
+                        .weight(1f)
+                        .padding(end = 10.dp),
+                    color = Color.Gray,
+                    thickness = 1.dp
+                )
+            }
 
-        // Iconos de Redes Sociales en LazyRow
-        LazyRow(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            items(redesSociales) { redSocial ->
-                SocialIcon(redSocial)
+            LazyRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                items(redesSociales) { redSocial ->
+                    SocialIcon(redSocial)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Más actividades",
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black,
+                    fontSize = 25.sp,
+                    modifier = Modifier.padding(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Divider(
+                    modifier = Modifier
+                        .height(1.dp)
+                        .weight(1f)
+                        .padding(end = 10.dp),
+                    color = Color.Gray,
+                    thickness = 1.dp
+                )
+            }
+
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 15.dp, vertical = 10.dp)
+                    .offset(y=-5.dp)
+            ) {
+                items(actividades) { actividad ->
+                    ActividadItem(actividad) {
+                        navController.navigate("InfoDetails/${actividad.id}")
+                    }
+                }
             }
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // Sección de Más Actividades
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Más actividades",
-                fontWeight = FontWeight.Bold,
-                color = Color.Black,
-                fontSize = 25.sp,
-                modifier = Modifier.padding(20.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Divider(
-                modifier = Modifier
-                    .height(1.dp)
-                    .weight(1f)
-                    .padding(end = 10.dp),
-                color = Color.Gray,
-                thickness = 1.dp
-            )
-        }
-
-        // Lista de Actividades
-        LazyColumn(
+        // Botón de Cerrar Sesión
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 15.dp, vertical = 20.dp)
-        ) {
-            items(actividades) { actividad ->
-                ActividadItem(actividad) {
-                    navController.navigate("InfoDetails/${actividad.id}")
+                .padding(horizontal = 35.dp)
+                .offset(y=-10.dp)
+                .requiredHeight(61.dp)
+                .clip(shape = RoundedCornerShape(30.dp))
+                .border(BorderStroke(1.dp, Color(0xffb6b6b6)), RoundedCornerShape(30.dp))
+                .background(color = Color.White)
+                .clickable {
+                    FirebaseAuth.getInstance().signOut()
+                    navController.navigate("login_screen") {
+                        popUpTo("menu_screen") { inclusive = true }
+                    }
                 }
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.salir),
+                    contentDescription = "Log out",
+                    modifier = Modifier
+                        .requiredSize(30.dp)
+                        .padding(end = 8.dp)
+                )
+                Text(
+                    text = "CERRAR SESIÓN Y SALIR",
+                    color = Color(0xffd13e3e),
+                    textAlign = TextAlign.Center,
+                    style = TextStyle(
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    ),
+                    modifier = Modifier
+                        .requiredWidth(235.dp)
+                        .wrapContentHeight(align = Alignment.CenterVertically)
+                )
             }
         }
     }
 }
+
 
 @Composable
 fun ActividadItem(actividad: Actividad, onClick: () -> Unit) {
