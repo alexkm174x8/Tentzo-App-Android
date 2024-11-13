@@ -67,7 +67,7 @@ fun CameraScreen() {
             Image(
                 bitmap = bitmap.asImageBitmap(),
                 contentDescription = "Imagen capturada",
-                modifier = Modifier.size(500.dp)
+                modifier = Modifier.size(510.dp)
             )
         } ?: run {
         }
