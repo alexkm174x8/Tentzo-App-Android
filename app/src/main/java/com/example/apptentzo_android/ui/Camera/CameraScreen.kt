@@ -67,10 +67,9 @@ fun CameraScreen() {
             Image(
                 bitmap = bitmap.asImageBitmap(),
                 contentDescription = "Imagen capturada",
-                modifier = Modifier.size(200.dp)
+                modifier = Modifier.size(500.dp)
             )
         } ?: run {
-            //mensaje si es que no se otorgan permisos
         }
     }
 }
