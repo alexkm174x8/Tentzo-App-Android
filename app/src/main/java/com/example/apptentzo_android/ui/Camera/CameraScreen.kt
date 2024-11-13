@@ -26,7 +26,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
+//yo cambio cambio comentario de prueba para commit
 @Composable
 fun CameraScreen() {
     var imageBitmap by remember { mutableStateOf<Bitmap?>(null) }
