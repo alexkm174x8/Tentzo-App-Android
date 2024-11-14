@@ -17,6 +17,16 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import okhttp3.*
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONObject
+import java.io.IOException
+import android.util.Base64
+import androidx.compose.material3.Text
+import java.io.ByteArrayOutputStream
+import android.util.Log
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,6 +40,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun CameraScreen() {
     var imageBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var plantBase64 by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
 
     val requestPermissionLauncher = rememberLauncherForActivityResult(
@@ -46,6 +57,11 @@ fun CameraScreen() {
         contract = ActivityResultContracts.TakePicturePreview()
     ) { bitmap: Bitmap? ->
         imageBitmap = bitmap
+        plantBase64 = bitmap?.let { convertBitmapToBase64(it) }
+
+        // Log the Base64 string
+        Log.d("CameraScreen", "Image Base64: ${plantBase64?.take(100)}...")  // Limit length for readability
+        identifyPlant(imageBase64 = plantBase64 ?: "", latitude = null, longitude = null, apiKey = "0B3G3gYo0gziMjliprpRFc5XVB2EbG9swngse8W4ZbnKOdNUOu")
     }
 
     LaunchedEffect(Unit) {
@@ -74,6 +90,64 @@ fun CameraScreen() {
         }
     }
 }
+
+fun convertBitmapToBase64(bitmap: Bitmap): String {
+    val outputStream = ByteArrayOutputStream()
+    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+    val byteArray = outputStream.toByteArray()
+    return Base64.encodeToString(byteArray, Base64.DEFAULT)
+}
+
+/////////////////API
+
+/////////////////API
+fun identifyPlant(imageBase64: String, latitude: Double?, longitude: Double?, apiKey: String) {
+    val client = OkHttpClient()
+    val url = "https://plant.id/api/v3/identification"
+
+    // Build JSON body
+    val jsonBody = JSONObject().apply {
+        put("images", listOf("data:image/jpg;base64,$imageBase64"))
+        if (latitude != null && longitude != null) {
+            put("latitude", latitude)
+            put("longitude", longitude)
+        }
+        put("similar_images", true)
+    }
+
+    val mediaType = "application/json".toMediaType()
+    val requestBody = jsonBody.toString().toRequestBody(mediaType)
+
+    // Create the request
+    val request = Request.Builder()
+        .url(url)
+        .addHeader("Api-Key", apiKey)
+        .addHeader("Content-Type", "application/json")
+        .post(requestBody)
+        .build()
+
+    // Execute the request
+    client.newCall(request).enqueue(object : Callback {
+        override fun onFailure(call: Call, e: IOException) {
+            Log.d("CameraScreen", "Request failed: ${e.message}")
+        }
+
+        override fun onResponse(call: Call, response: Response) {
+            response.use {
+                if (!it.isSuccessful) {
+                    Log.d("CameraScreen", "Request failed: ${it.message}")
+                    return
+                }
+
+                // Parse and handle the response
+                val responseBody = it.body?.string()
+                Log.d("CameraScreen", "Response: $responseBody")
+                // You can use a JSON parser to further process responseBody
+            }
+        }
+    })
+}
+
 
 @Preview(showBackground = true)
 @Composable
