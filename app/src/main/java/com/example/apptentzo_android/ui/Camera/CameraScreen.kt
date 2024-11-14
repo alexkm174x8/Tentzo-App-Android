@@ -20,12 +20,12 @@ import androidx.compose.ui.unit.dp
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
-import org.json.JSONObject
-import java.io.IOException
 import android.util.Base64
 import androidx.compose.material3.Text
 import java.io.ByteArrayOutputStream
 import android.util.Log
+import org.json.JSONObject
+import java.io.IOException
 
 
 class MainActivity : ComponentActivity() {
@@ -99,8 +99,6 @@ fun convertBitmapToBase64(bitmap: Bitmap): String {
 }
 
 /////////////////API
-
-/////////////////API
 fun identifyPlant(imageBase64: String, latitude: Double?, longitude: Double?, apiKey: String) {
     val client = OkHttpClient()
     val url = "https://plant.id/api/v3/identification"
@@ -129,20 +127,34 @@ fun identifyPlant(imageBase64: String, latitude: Double?, longitude: Double?, ap
     // Execute the request
     client.newCall(request).enqueue(object : Callback {
         override fun onFailure(call: Call, e: IOException) {
-            Log.d("CameraScreen", "Request failed: ${e.message}")
+            println("Request failed: ${e.message}")
         }
 
         override fun onResponse(call: Call, response: Response) {
             response.use {
                 if (!it.isSuccessful) {
-                    Log.d("CameraScreen", "Request failed: ${it.message}")
+                    println("Request failed: ${it.message}")
                     return
                 }
 
                 // Parse and handle the response
                 val responseBody = it.body?.string()
-                Log.d("CameraScreen", "Response: $responseBody")
-                // You can use a JSON parser to further process responseBody
+                if (responseBody != null) {
+                    val jsonResponse = JSONObject(responseBody)
+                    val result = jsonResponse.optJSONObject("result")
+                    val classification = result?.optJSONObject("classification")
+                    val suggestions = classification?.optJSONArray("suggestions")
+
+                    // Extract the "name" field from the first suggestion
+                    if (suggestions != null && suggestions.length() > 0) {
+                        val firstSuggestion = suggestions.getJSONObject(0)
+                        val plantName = firstSuggestion.optString("name", "Unknown Plant")
+                        Log.d("CameraScreen","Plant Name: $plantName")
+                        // You can now use the plantName variable for further processing
+                    } else {
+                        Log.d("CameraScreen","No plant suggestions found.")
+                    }
+                }
             }
         }
     })
