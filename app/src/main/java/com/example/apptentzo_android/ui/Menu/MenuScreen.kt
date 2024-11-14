@@ -281,6 +281,7 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
                         )
                         .requiredWidth(width = 228.dp)
                         .requiredHeight(height = 28.dp)
+
                 )
 
                 // Definir requisitos de insignias
