@@ -1,3 +1,4 @@
+// InfoScreen.kt
 package com.example.apptentzo_android.ui.Info
 
 import android.content.Intent
@@ -20,17 +21,19 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.apptentzo_android.R
 import com.example.apptentzo_android.ui.model.Actividad
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
-import com.google.firebase.auth.FirebaseAuth
 
 data class SocialMedia(val name: String, val url: String, val iconRes: Int)
 
@@ -38,6 +41,9 @@ data class SocialMedia(val name: String, val url: String, val iconRes: Int)
 fun InfoScreen(navController: NavController) {
     var actividades by remember { mutableStateOf(listOf<Actividad>()) }
     val db = FirebaseFirestore.getInstance()
+
+    // Estado para controlar la visualización del pop-up
+    var showLogoutDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         try {
@@ -84,6 +90,10 @@ fun InfoScreen(navController: NavController) {
         Column(
             modifier = Modifier.weight(1f) // Permite que el contenido ocupe espacio y empuja el botón hacia abajo
         ) {
+            // ... (Contenido existente de la pantalla)
+            // Aquí va el código de las redes sociales y actividades
+            // ...
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -145,7 +155,7 @@ fun InfoScreen(navController: NavController) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 15.dp, vertical = 10.dp)
-                    .offset(y=-5.dp)
+                    .offset(y = -5.dp)
             ) {
                 items(actividades) { actividad ->
                     ActividadItem(actividad) {
@@ -162,16 +172,14 @@ fun InfoScreen(navController: NavController) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 35.dp)
-                .offset(y=-10.dp)
+                .offset(y = -10.dp)
                 .requiredHeight(61.dp)
                 .clip(shape = RoundedCornerShape(30.dp))
                 .border(BorderStroke(1.dp, Color(0xffb6b6b6)), RoundedCornerShape(30.dp))
                 .background(color = Color.White)
                 .clickable {
-                    FirebaseAuth.getInstance().signOut()
-                    navController.navigate("login_screen") {
-                        popUpTo("menu_screen") { inclusive = true }
-                    }
+                    // Mostrar el diálogo de confirmación
+                    showLogoutDialog = true
                 }
         ) {
             Row(
@@ -201,8 +209,98 @@ fun InfoScreen(navController: NavController) {
             }
         }
     }
-}
 
+    // Diálogo de confirmación para cerrar sesión
+    if (showLogoutDialog) {
+        // Usamos Dialog para mostrar el pop-up
+        Dialog(
+            onDismissRequest = { showLogoutDialog = false }
+        ) {
+            Surface(
+                shape = RoundedCornerShape(30.dp),
+                color = Color.White,
+                border = BorderStroke(3.dp, Color.White),
+                modifier = Modifier
+                    .clip(shape = RoundedCornerShape(30.dp))
+            ) {
+                Box(
+                    modifier = Modifier
+                        .width(343.dp)
+                        .height(179.dp)
+                ) {
+                    Text(
+                        text = "¿Estás seguro de cerrar sesión?",
+                        color = Color(0xff000003),
+                        textAlign = TextAlign.Center,
+                        style = TextStyle(
+                            fontSize = 25.sp,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        modifier = Modifier
+                            .align(alignment = Alignment.TopCenter)
+                            .padding(top = 22.dp, start = 22.dp, end = 22.dp)
+                            .requiredHeight(height = 62.dp)
+                            .wrapContentHeight(align = Alignment.CenterVertically)
+                    )
+                    // Botón "Cerrar Sesión"
+                    Box(
+                        modifier = Modifier
+                            .align(alignment = Alignment.BottomStart)
+                            .padding(start = 22.dp, bottom = 22.dp)
+                            .width(130.dp)
+                            .height(49.dp)
+                            .clip(shape = RoundedCornerShape(25.dp))
+                            .background(color = Color(0xff7fc297))
+                            .clickable {
+                                // Cerrar sesión y navegar al login
+                                FirebaseAuth.getInstance().signOut()
+                                navController.navigate("login_screen") {
+                                    popUpTo(navController.graph.startDestinationId) {
+                                        inclusive = true
+                                    }
+                                    launchSingleTop = true
+                                }
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Cerrar Sesión",
+                            color = Color(0xff000003),
+                            textAlign = TextAlign.Center,
+                            style = TextStyle(
+                                fontSize = 14.sp
+                            )
+                        )
+                    }
+                    // Botón "Cancelar"
+                    Box(
+                        modifier = Modifier
+                            .align(alignment = Alignment.BottomEnd)
+                            .padding(end = 22.dp, bottom = 22.dp)
+                            .width(130.dp)
+                            .height(49.dp)
+                            .clip(shape = RoundedCornerShape(25.dp))
+                            .background(color = Color(0xffd3fde2))
+                            .clickable {
+                                // Cerrar el diálogo sin hacer nada
+                                showLogoutDialog = false
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Cancelar",
+                            color = Color(0xff000003),
+                            textAlign = TextAlign.Center,
+                            style = TextStyle(
+                                fontSize = 14.sp
+                            )
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
 
 @Composable
 fun ActividadItem(actividad: Actividad, onClick: () -> Unit) {
