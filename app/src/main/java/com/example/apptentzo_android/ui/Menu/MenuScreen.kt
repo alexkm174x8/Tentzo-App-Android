@@ -1,7 +1,12 @@
 package com.example.apptentzo_android.ui.Menu
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -34,18 +39,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.AlertDialog
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
@@ -55,19 +57,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.apptentzo_android.R
 import com.example.apptentzo_android.ui.model.Insignia
 import com.example.apptentzo_android.ui.model.InsigniaRequirement
-import com.example.apptentzo_android.ui.model.Parameter
 import com.example.apptentzo_android.ui.model.Planta
 import com.example.apptentzo_android.ui.model.Usuario
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import kotlin.random.Random // Import necesario para generar valores aleatorios
+import kotlin.random.Random
 
 @Composable
 fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifier) {
@@ -91,10 +94,58 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
     var randomWeatherDescription by remember { mutableStateOf("") }
     var isWeatherLoading by remember { mutableStateOf(true) }
 
+    // Variable para la imagen seleccionada
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+
+    // Remember the launcher for picking images from the gallery
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            // Manejar la URI de la imagen seleccionada
+            selectedImageUri = it
+        }
+    }
+
+    // LaunchedEffect para subir la imagen cuando cambia selectedImageUri
+    LaunchedEffect(selectedImageUri) {
+        selectedImageUri?.let { uri ->
+            val storageRef = FirebaseStorage.getInstance().reference
+            val profileImagesRef = storageRef.child("profile_images/${userId}.jpg")
+
+            try {
+                // Mostrar indicador de carga
+                isLoading = true
+
+                // Subir la imagen a Firebase Storage
+                profileImagesRef.putFile(uri).await()
+
+                // Obtener la URL de descarga
+                val downloadUrl = profileImagesRef.downloadUrl.await().toString()
+
+                // Actualizar el campo 'foto_perfil' en Firestore
+                val db = FirebaseFirestore.getInstance()
+                db.collection("Usuario").document(userId!!).update("foto_perfil", downloadUrl).await()
+
+                // Actualizar el estado 'usuario'
+                usuario = usuario?.copy(foto_perfil = downloadUrl)
+
+                Toast.makeText(context, "Foto de perfil actualizada", Toast.LENGTH_SHORT).show()
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+                // Manejar el error
+                Toast.makeText(context, "Error al actualizar la foto de perfil", Toast.LENGTH_SHORT).show()
+            } finally {
+                isLoading = false
+            }
+        }
+    }
+
     // Generar temperatura y estado del clima aleatorios
     LaunchedEffect(Unit) {
         isWeatherLoading = true
-        // Generar temperatura aleatoria entre un rango (por ejemplo, 15°C a 35°C)
+        // Generar temperatura aleatoria entre 15°C y 35°C
         randomTemperature = Random.nextInt(15, 36)
 
         // Lista de posibles estados del clima
@@ -450,7 +501,8 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
                 // Botón de editar perfil
                 IconButton(
                     onClick = {
-                        // Acción para editar perfil
+                        // Lanzar el selector de imágenes
+                        imagePickerLauncher.launch("image/*")
                     },
                     modifier = Modifier
                         .align(alignment = Alignment.TopStart)
