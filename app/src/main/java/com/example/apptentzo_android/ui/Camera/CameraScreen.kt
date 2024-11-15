@@ -20,6 +20,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.*
@@ -29,9 +30,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
@@ -144,88 +148,88 @@ fun CameraScreen() {
                     bitmap = bitmap.asImageBitmap(),
                     contentDescription = "Imagen capturada",
                     modifier = Modifier
-                        .size(500.dp)
-                        .offset(y = 40.dp)
+                        .fillMaxWidth()
+                        .aspectRatio(4f / 3f) // Ajusta la relación de aspecto según sea necesario
                 )
             } ?: run {
-                // Mensaje si es que no se otorgan permisos o no hay imagen
-                Text(text = "Permiso de cámara requerido.", color = Color.Red)
+                // Mensaje si no se otorgan permisos o no hay imagen
+                Text(
+                    text = "Permiso de cámara requerido.",
+                    color = Color.Red,
+                    modifier = Modifier.padding(16.dp)
+                )
             }
 
             plantInfo?.let { info ->
+                Spacer(modifier = Modifier.height(16.dp))
+
                 // Título
                 Text(
                     text = "Especie Encontrada",
                     color = Color.Black,
-                    style = TextStyle(fontSize = 30.sp),
+                    style = TextStyle(fontSize = 24.sp, fontWeight = FontWeight.Bold),
                     maxLines = 2,
-                    modifier = Modifier
-                        .offset(x = -60.dp, y = 100.dp)
+                    modifier = Modifier.padding(horizontal = 16.dp)
                 )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Caja para la información de la planta
                 Box(
                     modifier = Modifier
-                        .requiredWidth(490.dp)
-                        .requiredHeight(150.dp)
-                        .offset(x = 55.dp, y = 25.dp)
-                        .background(Color.White)
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color(0xff7fc297))
+                        .padding(16.dp)
                 ) {
-
-                    // Fondo verde con esquinas redondeadas
-                    Box(
-                        modifier = Modifier
-                            .requiredWidth(380.dp)
-                            .requiredHeight(150.dp)
-                            .clip(RoundedCornerShape(30.dp))
-                            .background(Color(0xff7fc297))
-                            .offset(x = 40.dp, y = -10.dp)
+                    // Colocamos una Row para organizar la imagen y los textos
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Colocamos una Row para organizar la imagen y los textos
-                        Row(
+                        // Imagen de la planta a la izquierda
+                        val painter = rememberAsyncImagePainter(info.imageUrl)
+                        Image(
+                            painter = painter,
+                            contentDescription = "Imagen de la planta",
                             modifier = Modifier
-                                .fillMaxSize()
-                                .offset(y = 10.dp)
-                                .padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                                .size(90.dp)
+                                .clip(CircleShape),
+                            contentScale = ContentScale.Crop
+                        )
+
+                        Spacer(modifier = Modifier.width(16.dp))
+
+                        // Columna para los nombres a la derecha
+                        Column(
+                            modifier = Modifier.weight(1f)
                         ) {
-                            // Imagen de la planta a la izquierda
-                            val painter = rememberAsyncImagePainter(info.imageUrl)
-                            Image(
-                                painter = painter,
-                                contentDescription = "Imagen de la planta",
-                                modifier = Modifier
-                                    .size(90.dp)
-                                    .offset(x = -10.dp)
+                            // Nombre común
+                            Text(
+                                text = info.name,
+                                color = Color.White,
+                                style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Medium),
+                                maxLines = 2
                             )
 
-                            Spacer(modifier = Modifier.width(16.dp))
-
-                            // Columna para los nombres a la derecha
-                            Column(
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                // Nombre común
-                                Text(
-                                    text = info.name,
-                                    color = Color.White,
-                                    style = TextStyle(fontSize = 22.sp),
-                                    maxLines = 2
-                                )
-
-                                // Nombre científico
-                                Text(
-                                    text = info.scientificName,
-                                    color = Color.White,
-                                    style = TextStyle(fontSize = 18.sp),
-                                    maxLines = 2
-                                )
-                            }
+                            // Nombre científico
+                            Text(
+                                text = info.scientificName,
+                                color = Color.White,
+                                style = TextStyle(
+                                    fontSize = 16.sp,
+                                    fontStyle = FontStyle.Italic
+                                ),
+                                maxLines = 2
+                            )
                         }
                     }
                 }
             } ?: Text(
                 text = "No se ha identificado ninguna planta aún.",
                 fontSize = 18.sp,
-                color = Color.Gray
+                color = Color.Gray,
+                modifier = Modifier.padding(16.dp)
             )
         }
     }
