@@ -106,7 +106,7 @@ fun CameraScreen() {
                 bitmap = bitmap.asImageBitmap(),
                 contentDescription = "Imagen capturada",
                 modifier = Modifier.size(500.dp)
-                    .offset(y=80.dp)
+                    .offset(y=40.dp)
             )
         } ?: run {
             // Mensaje si es que no se otorgan permisos o no hay imagen
@@ -128,7 +128,7 @@ fun CameraScreen() {
                 modifier = Modifier
                     .requiredWidth(490.dp)
                     .requiredHeight(150.dp)
-                    .offset(x = 55.dp, y = 150.dp)
+                    .offset(x = 55.dp, y = 25.dp)
                     .background(Color.White)
             ) {
 
@@ -139,7 +139,7 @@ fun CameraScreen() {
                         .requiredHeight(150.dp)
                         .clip(RoundedCornerShape(30.dp))
                         .background(Color(0xff7fc297))
-                        .offset(x = 40.dp, y = -40.dp)
+                        .offset(x = 40.dp, y = -10.dp)
                 ) {
                     // Colocamos una Row para organizar la imagen y los textos
                     Row(
