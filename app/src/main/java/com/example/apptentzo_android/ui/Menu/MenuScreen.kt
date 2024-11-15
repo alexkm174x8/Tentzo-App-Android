@@ -360,7 +360,6 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
                         .wrapContentHeight(align = Alignment.CenterVertically)
                 )
 
-
                 // Foto de perfil
                 IconButton(
                     onClick = {

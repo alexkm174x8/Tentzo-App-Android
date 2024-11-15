@@ -1,7 +1,7 @@
 package com.example.apptentzo_android.ui.model
 
 data class Planta(
-    val id: String = "",
+    var id: String = "",
     val nomComun: String = "",
     val nomCientifico: String = "",
     val descripcion: String = "",

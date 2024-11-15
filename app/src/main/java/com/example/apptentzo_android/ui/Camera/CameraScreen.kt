@@ -28,6 +28,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.rememberAsyncImagePainter
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -44,10 +45,17 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+// Definimos una data class para almacenar la información de la planta
+data class PlantInfo(
+    val name: String,
+    val scientificName: String,
+    val imageUrl: String
+)
+
 @Composable
 fun CameraScreen() {
     var imageBitmap by remember { mutableStateOf<Bitmap?>(null) }
-    var plantName by remember { mutableStateOf<String?>(null) }
+    var plantInfo by remember { mutableStateOf<PlantInfo?>(null) }
     val context = LocalContext.current
 
     val requestPermissionLauncher = rememberLauncherForActivityResult(
@@ -56,7 +64,7 @@ fun CameraScreen() {
         if (isGranted) {
             Toast.makeText(context, "Permiso concedido", Toast.LENGTH_SHORT).show()
         } else {
-            Toast.makeText(context, "Permiso denegado", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Intente otra vez", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -72,8 +80,8 @@ fun CameraScreen() {
             latitude = null,
             longitude = null,
             apiKey = "0B3G3gYo0gziMjliprpRFc5XVB2EbG9swngse8W4ZbnKOdNUOu", // Reemplaza con tu clave de API
-            onPlantIdentified = { name ->
-                plantName = name
+            onPlantIdentified = { info ->
+                plantInfo = info
             }
         )
     }
@@ -98,52 +106,83 @@ fun CameraScreen() {
                 bitmap = bitmap.asImageBitmap(),
                 contentDescription = "Imagen capturada",
                 modifier = Modifier.size(500.dp)
+                    .offset(y=80.dp)
             )
         } ?: run {
             // Mensaje si es que no se otorgan permisos o no hay imagen
             Text(text = "Permiso de cámara requerido.", color = Color.Red)
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
 
-        plantName?.let { name ->
+        plantInfo?.let { info ->
             // Popup con el diseño especificado
+            Text(
+                text = "Especie Encontrada",
+                color = Color.Black,
+                style = TextStyle(fontSize = 30.sp),
+                maxLines = 2,
+                modifier = Modifier
+                .offset(x = -60.dp, y = 100.dp)
+            )
             Box(
                 modifier = Modifier
-                    .requiredWidth(430.dp)
-                    .requiredHeight(207.dp)
-                    .offset(x= 10.dp, y = 30.dp)
+                    .requiredWidth(490.dp)
+                    .requiredHeight(150.dp)
+                    .offset(x = 55.dp, y = 150.dp)
                     .background(Color.White)
             ) {
-                // Título
-                Text(
-                    text = "Especies identificadas:",
-                    color = Color.Black,
-                    style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .offset(x = 23.dp, y = 100.dp)
-                        .requiredWidth(391.dp)
-                )
+
                 // Fondo verde con esquinas redondeadas
                 Box(
                     modifier = Modifier
-                        .requiredWidth(400.dp)
+                        .requiredWidth(380.dp)
                         .requiredHeight(150.dp)
                         .clip(RoundedCornerShape(30.dp))
                         .background(Color(0xff7fc297))
-                        .offset(x= 40.dp, y = 100.dp)
-                )
+                        .offset(x = 40.dp, y = -40.dp)
+                ) {
+                    // Colocamos una Row para organizar la imagen y los textos
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .offset(y=10.dp)
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Imagen de la planta a la izquierda
+                        val painter = rememberAsyncImagePainter(info.imageUrl)
+                        Image(
+                            painter = painter,
+                            contentDescription = "Imagen de la planta",
+                            modifier = Modifier
+                                .size(90.dp)
+                                .offset(x = -10.dp)
+                        )
 
-                // Nombre de la planta
-                Text(
-                    text = name,
-                    color = Color.White,
-                    style = TextStyle(fontSize = 20.sp),
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .offset(x = 100.dp, y = 50.dp)
-                )
+                        Spacer(modifier = Modifier.width(16.dp))
+
+                        // Columna para los nombres a la derecha
+                        Column(
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            // Nombre común
+                            Text(
+                                text = info.name,
+                                color = Color.White,
+                                style = TextStyle(fontSize = 22.sp),
+                                maxLines = 2
+                            )
+
+                            // Nombre científico
+                            Text(
+                                text = info.scientificName,
+                                color = Color.White,
+                                style = TextStyle(fontSize = 18.sp),
+                                maxLines = 2
+                            )
+                        }
+                    }
+                }
             }
         } ?: Text(
             text = "No se ha identificado ninguna planta aún.",
@@ -151,7 +190,6 @@ fun CameraScreen() {
             color = Color.Gray
         )
     }
-
 }
 
 fun convertBitmapToBase64(bitmap: Bitmap): String {
@@ -167,7 +205,7 @@ fun identifyPlant(
     latitude: Double?,
     longitude: Double?,
     apiKey: String,
-    onPlantIdentified: (String) -> Unit
+    onPlantIdentified: (PlantInfo) -> Unit
 ) {
     val client = OkHttpClient()
     val url = "https://api.plant.id/v2/identify"
@@ -199,10 +237,15 @@ fun identifyPlant(
     client.newCall(request).enqueue(object : Callback {
         override fun onFailure(call: Call, e: IOException) {
             Log.e("CameraScreen", "Request failed: ${e.message}")
-            // Actualizar plantName en caso de fallo
             val mainHandler = Handler(Looper.getMainLooper())
             mainHandler.post {
-                onPlantIdentified("Error en la identificación")
+                onPlantIdentified(
+                    PlantInfo(
+                        name = "Error en la identificación",
+                        scientificName = "",
+                        imageUrl = ""
+                    )
+                )
             }
         }
 
@@ -212,7 +255,13 @@ fun identifyPlant(
                     Log.e("CameraScreen", "Request failed: ${it.message}")
                     val mainHandler = Handler(Looper.getMainLooper())
                     mainHandler.post {
-                        onPlantIdentified("Error en la identificación")
+                        onPlantIdentified(
+                            PlantInfo(
+                                name = "Error en la identificación",
+                                scientificName = "",
+                                imageUrl = ""
+                            )
+                        )
                     }
                     return
                 }
@@ -223,28 +272,60 @@ fun identifyPlant(
                     val jsonResponse = JSONObject(responseBody)
                     val suggestions = jsonResponse.optJSONArray("suggestions")
 
-                    // Extraer el campo "plant_name" de la primera sugerencia
+                    // Extraer el campo "plant_name", "common_names" e "image_url" de la primera sugerencia
                     if (suggestions != null && suggestions.length() > 0) {
                         val firstSuggestion = suggestions.getJSONObject(0)
                         val plantName = firstSuggestion.optString("plant_name", "Planta desconocida")
-                        Log.d("CameraScreen", "Plant Name: $plantName")
+                        val plantDetails = firstSuggestion.optJSONObject("plant_details")
+                        val commonNamesArray = plantDetails?.optJSONArray("common_names")
+                        val commonName = commonNamesArray?.optString(0) ?: "Nombre común desconocido"
 
-                        // Actualizar plantName en el hilo principal
+                        val similarImages = firstSuggestion.optJSONArray("similar_images")
+                        val imageUrl = if (similarImages != null && similarImages.length() > 0) {
+                            val firstImage = similarImages.getJSONObject(0)
+                            firstImage.optString("url", "")
+                        } else {
+                            ""
+                        }
+
+                        Log.d("CameraScreen", "Plant Name: $plantName")
+                        Log.d("CameraScreen", "Common Name: $commonName")
+                        Log.d("CameraScreen", "Image URL: $imageUrl")
+
+                        // Actualizar plantInfo en el hilo principal
                         val mainHandler = Handler(Looper.getMainLooper())
                         mainHandler.post {
-                            onPlantIdentified(plantName)
+                            onPlantIdentified(
+                                PlantInfo(
+                                    name = commonName,
+                                    scientificName = plantName,
+                                    imageUrl = imageUrl
+                                )
+                            )
                         }
                     } else {
                         Log.d("CameraScreen", "No se encontraron sugerencias de plantas.")
                         val mainHandler = Handler(Looper.getMainLooper())
                         mainHandler.post {
-                            onPlantIdentified("No se encontró ninguna planta.")
+                            onPlantIdentified(
+                                PlantInfo(
+                                    name = "No se encontró ninguna planta.",
+                                    scientificName = "",
+                                    imageUrl = ""
+                                )
+                            )
                         }
                     }
                 } else {
                     val mainHandler = Handler(Looper.getMainLooper())
                     mainHandler.post {
-                        onPlantIdentified("Error en la identificación")
+                        onPlantIdentified(
+                            PlantInfo(
+                                name = "Error en la identificación",
+                                scientificName = "",
+                                imageUrl = ""
+                            )
+                        )
                     }
                 }
             }
