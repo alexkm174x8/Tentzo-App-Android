@@ -1,3 +1,5 @@
+// CameraScreen.kt
+
 package com.example.apptentzo_android.ui.Camera
 
 import android.Manifest
@@ -40,6 +42,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
 import com.example.apptentzo_android.R
+import com.example.apptentzo_android.ui.model.Usuario
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -71,6 +76,11 @@ fun CameraScreen() {
     var plantInfo by remember { mutableStateOf<PlantInfo?>(null) }
     val context = LocalContext.current
 
+    // Obtener el UID del usuario actual
+    val mAuth = FirebaseAuth.getInstance()
+    val currentUser = mAuth.currentUser
+    val userId = currentUser?.uid
+
     val requestPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -95,6 +105,11 @@ fun CameraScreen() {
             apiKey = "0B3G3gYo0gziMjliprpRFc5XVB2EbG9swngse8W4ZbnKOdNUOu", // Reemplaza con tu clave de API
             onPlantIdentified = { info ->
                 plantInfo = info
+
+                // Incrementar el campo 'plantas' en Firebase si se identificó una planta
+                if (info.name != "Error en la identificación" && userId != null) {
+                    incrementPlantCount(userId)
+                }
             }
         )
     }
@@ -411,4 +426,19 @@ fun saveImageToGallery(context: Context, bitmap: Bitmap) {
     } else {
         Toast.makeText(context, "Error al guardar la imagen", Toast.LENGTH_SHORT).show()
     }
+}
+
+// Función para incrementar el campo 'plantas' en Firebase
+fun incrementPlantCount(userId: String) {
+    val db = FirebaseFirestore.getInstance()
+    val userRef = db.collection("Usuario").document(userId)
+
+    // Usamos FieldValue.increment para incrementar atómicamente el valor
+    userRef.update("plantas", com.google.firebase.firestore.FieldValue.increment(1))
+        .addOnSuccessListener {
+            Log.d("CameraScreen", "Campo 'plantas' incrementado exitosamente.")
+        }
+        .addOnFailureListener { e ->
+            Log.e("CameraScreen", "Error al incrementar el campo 'plantas': ${e.message}")
+        }
 }
