@@ -725,4 +725,3 @@ fun isInsigniaUnlocked(insigniaId: String, usuario: Usuario, requirements: List<
         false
     }
 }
-
