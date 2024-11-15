@@ -4,9 +4,14 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Text
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -15,6 +20,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -50,46 +56,51 @@ fun RouteDetails(navController: NavHostController, rutaId: String?, modifier: Mo
 
     if (isLoading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            androidx.compose.material3.CircularProgressIndicator()
+            CircularProgressIndicator()
         }
     } else {
         ruta?.let { rutaData ->
-            Box(
+            // Usamos Column para organizar los elementos verticalmente
+            Column(
                 modifier = modifier
                     .fillMaxSize()
                     .background(Color.White)
             ) {
-                // Imagen de fondo de la ruta
-                AsyncImage(
-                    model = rutaData.imagen,
-                    contentDescription = "Imagen de la Ruta",
+                // Imagen de fondo de la ruta con botón de retroceso superpuesto
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(400.dp),
-                    contentScale = ContentScale.Crop
-                )
+                        .aspectRatio(16f / 9f) // Mantener relación de aspecto estándar
+                ) {
+                    AsyncImage(
+                        model = rutaData.imagen,
+                        contentDescription = "Imagen de la Ruta",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
 
-                // Botón de retroceso
-                Image(
-                    painter = painterResource(id = R.drawable.arrow_back),
-                    contentDescription = "arrow_back",
-                    colorFilter = ColorFilter.tint(Color.White),
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .size(60.dp)
-                        .clickable {
-                            navController.popBackStack()
-                        }
-                )
+                    // Botón de retroceso
+                    Image(
+                        painter = painterResource(id = R.drawable.arrow_back),
+                        contentDescription = "Atrás",
+                        colorFilter = ColorFilter.tint(Color.White),
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .size(40.dp)
+                            .clickable {
+                                navController.popBackStack()
+                            }
+                    )
+                }
 
-                // Contenido superpuesto
+                // Contenido
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(top = 350.dp)
                         .clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp))
                         .background(Color.White)
                         .padding(16.dp)
+                        .verticalScroll(rememberScrollState())
                 ) {
                     // Nombre de la ruta
                     Text(
@@ -100,10 +111,10 @@ fun RouteDetails(navController: NavHostController, rutaId: String?, modifier: Mo
                             fontSize = 32.sp,
                             fontWeight = FontWeight.Bold
                         ),
-                        modifier = Modifier
-                            .fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(16.dp))
+
                     // Distancia y Tiempo
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -114,7 +125,7 @@ fun RouteDetails(navController: NavHostController, rutaId: String?, modifier: Mo
                                 text = "Distancia:",
                                 color = Color.Black,
                                 style = TextStyle(
-                                    fontSize = 24.sp,
+                                    fontSize = 20.sp,
                                     fontWeight = FontWeight.Medium
                                 )
                             )
@@ -122,7 +133,7 @@ fun RouteDetails(navController: NavHostController, rutaId: String?, modifier: Mo
                                 text = rutaData.distancia,
                                 color = Color.Black,
                                 style = TextStyle(
-                                    fontSize = 24.sp,
+                                    fontSize = 20.sp,
                                     fontWeight = FontWeight.Light
                                 )
                             )
@@ -132,7 +143,7 @@ fun RouteDetails(navController: NavHostController, rutaId: String?, modifier: Mo
                                 text = "Tiempo:",
                                 color = Color.Black,
                                 style = TextStyle(
-                                    fontSize = 24.sp,
+                                    fontSize = 20.sp,
                                     fontWeight = FontWeight.Medium
                                 )
                             )
@@ -140,21 +151,23 @@ fun RouteDetails(navController: NavHostController, rutaId: String?, modifier: Mo
                                 text = rutaData.tiempo,
                                 color = Color.Black,
                                 style = TextStyle(
-                                    fontSize = 24.sp,
+                                    fontSize = 20.sp,
                                     fontWeight = FontWeight.Light
                                 )
                             )
                         }
                     }
+
                     Spacer(modifier = Modifier.height(16.dp))
                     Divider(color = Color.Gray)
                     Spacer(modifier = Modifier.height(16.dp))
+
                     // Detalles
                     Text(
                         text = "Detalles:",
                         color = Color.Black,
                         style = TextStyle(
-                            fontSize = 24.sp,
+                            fontSize = 20.sp,
                             fontWeight = FontWeight.Medium
                         )
                     )
@@ -166,25 +179,26 @@ fun RouteDetails(navController: NavHostController, rutaId: String?, modifier: Mo
                             fontSize = 16.sp
                         )
                     )
+
                     Spacer(modifier = Modifier.height(32.dp))
+
                     // Botón para iniciar ruta
-                    Box(
+                    Button(
+                        onClick = {
+                            navController.navigate("RouteDisplay/${rutaId}")
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(56.dp)
-                            .clip(RoundedCornerShape(30.dp))
-                            .background(color = Color(0xff7fc297))
-                            .clickable {
-                                navController.navigate("RouteDisplay/${rutaId}")
-                            },
-                        contentAlignment = Alignment.Center
+                            .height(56.dp),
+                        shape = RoundedCornerShape(30.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xff7fc297))
                     ) {
                         Text(
                             text = "Iniciar ruta",
                             color = Color.White,
                             textAlign = TextAlign.Center,
                             style = TextStyle(
-                                fontSize = 24.sp,
+                                fontSize = 20.sp,
                                 fontWeight = FontWeight.Medium
                             )
                         )

@@ -3,7 +3,9 @@ package com.example.apptentzo_android.ui.Info
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.CircularProgressIndicator
@@ -13,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -54,42 +57,55 @@ fun InfoDetails(actividadId: String, navController: NavController) {
         }
     } else {
         actividad?.let { actividadData ->
+            // Permitir scroll en caso de que el contenido no quepa en la pantalla
+            val scrollState = rememberScrollState()
+
             // Mostrar los datos de la actividad una vez cargados
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(color = Color.White)
+                    .verticalScroll(scrollState)
             ) {
-                // Imagen de fondo de la actividad
-                AsyncImage(
-                    model = actividadData.imagen,
-                    contentDescription = "Imagen de ${actividadData.nombre}",
-                    contentScale = ContentScale.Crop,
+                // Imagen de fondo de la actividad con botón de retroceso superpuesto
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(437.dp)
-                )
-
-                // Botón de retroceso
-                IconButton(
-                    onClick = { navController.popBackStack() },
-                    modifier = Modifier
-                        .size(60.dp)
-                        .offset(x = 17.dp, y = 33.dp)
+                        .aspectRatio(16f / 9f) // Relación de aspecto estándar
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.arrow_back),
-                        contentDescription = "icon",
+                    // Imagen de fondo
+                    AsyncImage(
+                        model = actividadData.imagen,
+                        contentDescription = "Imagen de ${actividadData.nombre}",
+                        contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
                     )
+
+                    // Botón de retroceso
+                    IconButton(
+                        onClick = { navController.popBackStack() },
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .size(40.dp)
+                            .background(Color.White.copy(alpha = 0.7f), shape = CircleShape)
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.arrow_back),
+                            contentDescription = "Atrás",
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
 
                 // Contenido de la actividad
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
                     modifier = Modifier
-                        .offset(x = 30.dp, y = 470.dp)
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
                 ) {
+                    // Tipo de actividad
                     Text(
                         text = actividadData.tipo,
                         color = Color(0xff7fc297),
@@ -98,6 +114,8 @@ fun InfoDetails(actividadId: String, navController: NavController) {
                             fontWeight = FontWeight.Medium
                         )
                     )
+
+                    // Nombre de la actividad
                     Text(
                         text = actividadData.nombre,
                         color = Color.Black,
@@ -106,76 +124,71 @@ fun InfoDetails(actividadId: String, navController: NavController) {
                             fontWeight = FontWeight.Bold
                         )
                     )
-                }
 
-                // Título "Detalles"
-                Text(
-                    text = "Detalles",
-                    color = Color.Black,
-                    style = TextStyle(
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    ),
-                    modifier = Modifier
-                        .offset(x = 30.dp, y = 535.dp)
-                        .requiredWidth(308.dp)
-                )
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                // Descripción de la actividad
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier
-                        .width(367.dp)
-                        .offset(x = 30.dp, y = 570.dp)
-                ) {
+                    // Título "Detalles"
+                    Text(
+                        text = "Detalles",
+                        color = Color.Black,
+                        style = TextStyle(
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Descripción de la actividad
                     Text(
                         text = actividadData.detalles,
                         color = Color.Black,
                         style = TextStyle(
-                            fontSize = 15.sp,
-                            textAlign = TextAlign.Start
-                        ),
-                        modifier = Modifier.fillMaxWidth()
+                            fontSize = 15.sp
+                        )
                     )
-                }
 
-                // Información de fecha y costo
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .offset(y = 739.dp)
-                        .padding(horizontal = 30.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column {
-                        Text(
-                            text = "Próxima Fecha:",
-                            color = Color.Black,
-                            style = TextStyle(
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Información de fecha y costo
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Text(
+                                text = "Próxima Fecha:",
+                                color = Color.Black,
+                                style = TextStyle(
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
                             )
-                        )
-                        Text(
-                            text = actividadData.fecha,
-                            color = Color.Black,
-                            style = TextStyle(fontSize = 15.sp)
-                        )
-                    }
-                    Column {
-                        Text(
-                            text = "Costo:",
-                            color = Color.Black,
-                            style = TextStyle(
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold
+                            Text(
+                                text = actividadData.fecha,
+                                color = Color.Black,
+                                style = TextStyle(fontSize = 15.sp)
                             )
-                        )
-                        Text(
-                            text = actividadData.costo,
-                            color = Color.Black,
-                            style = TextStyle(fontSize = 15.sp)
-                        )
+                        }
+                        Column(
+                            horizontalAlignment = Alignment.End
+                        ) {
+                            Text(
+                                text = "Costo:",
+                                color = Color.Black,
+                                style = TextStyle(
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            )
+                            Text(
+                                text = actividadData.costo,
+                                color = Color.Black,
+                                style = TextStyle(fontSize = 15.sp)
+                            )
+                        }
                     }
                 }
             }

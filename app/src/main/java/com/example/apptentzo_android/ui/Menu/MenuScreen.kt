@@ -2,6 +2,9 @@ package com.example.apptentzo_android.ui.Menu
 
 import android.content.Intent
 import android.net.Uri
+import android.provider.MediaStore
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -31,21 +34,34 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Button
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.Snackbar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
@@ -65,9 +81,11 @@ import com.example.apptentzo_android.ui.model.Planta
 import com.example.apptentzo_android.ui.model.Usuario
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import kotlin.random.Random // Import necesario para generar valores aleatorios
+import java.util.UUID
+import kotlin.random.Random
 
 @Composable
 fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifier) {
@@ -86,7 +104,40 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
     var florDelDia by remember { mutableStateOf<Planta?>(null) }
     var isLoading by remember { mutableStateOf(true) }
 
+    val coroutineScope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
+    // Launcher para seleccionar imagen de la galería
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null && userId != null) {
+            // Subir imagen a Firebase Storage y actualizar Firestore
+            coroutineScope.launch {
+                try {
+                    val storageRef = FirebaseStorage.getInstance().reference
+                    val profileImagesRef = storageRef.child("profileImages/${userId}/${UUID.randomUUID()}")
+                    val uploadTask = profileImagesRef.putFile(uri).await()
+                    val downloadUrl = profileImagesRef.downloadUrl.await().toString()
+
+                    // Actualizar la URL en Firestore
+                    val db = FirebaseFirestore.getInstance()
+                    db.collection("Usuario").document(userId)
+                        .update("foto_perfil", downloadUrl)
+                        .await()
+
+                    // Actualizar el estado local del usuario
+                    usuario = usuario?.copy(foto_perfil = downloadUrl)
+
+                    snackbarHostState.showSnackbar("Foto de perfil actualizada")
+
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    snackbarHostState.showSnackbar("Error al actualizar la foto de perfil")
+                }
+            }
+        }
+    }
 
     // Obtener datos del usuario, insignias y planta aleatoria desde Firestore
     LaunchedEffect(userId) {
@@ -252,7 +303,6 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
                     }
                 }
 
-
                 // Divisores
                 Divider(
                     color = Color(0xffd1d1d1),
@@ -343,7 +393,6 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
                         .wrapContentHeight(align = Alignment.CenterVertically)
                 )
 
-
                 Text(
                     text = "¿Listo para la aventura?",
                     color = Color.Black,
@@ -395,7 +444,8 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
                 // Botón de editar perfil
                 IconButton(
                     onClick = {
-                        // Acción para editar perfil
+                        // Lanzar el selector de imágenes
+                        imagePickerLauncher.launch("image/*")
                     },
                     modifier = Modifier
                         .align(alignment = Alignment.TopStart)
@@ -432,8 +482,8 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
                     modifier = Modifier
                         .align(alignment = Alignment.TopStart)
                         .offset(
-                            x = 220.dp,
-                            y = 176.dp
+                            x = 240.dp,
+                            y = 170.dp
                         )
                         .requiredWidth(width = 216.dp)
                         .requiredHeight(height = 83.dp)
@@ -648,6 +698,10 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
                     }
                 }
 
+                // Mostrar mensajes de Snackbar
+                LaunchedEffect(snackbarHostState) {
+                    snackbarHostState.currentSnackbarData?.dismiss()
+                }
             }
         } ?: run {
             // Si no se pudo cargar la información del usuario
@@ -657,7 +711,6 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
         }
     }
 }
-
 // Función auxiliar para verificar si la insignia está desbloqueada
 fun isInsigniaUnlocked(insigniaId: String, usuario: Usuario, requirements: List<InsigniaRequirement>): Boolean {
     val requirement = requirements.find { it.insigniaId == insigniaId }
@@ -672,3 +725,4 @@ fun isInsigniaUnlocked(insigniaId: String, usuario: Usuario, requirements: List<
         false
     }
 }
+
