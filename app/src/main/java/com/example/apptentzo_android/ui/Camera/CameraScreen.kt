@@ -112,17 +112,9 @@ fun CameraScreen() {
                 modifier = Modifier
                     .requiredWidth(430.dp)
                     .requiredHeight(207.dp)
-                    .clip(RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp))
+                    .offset(x= 10.dp, y = 30.dp)
                     .background(Color.White)
             ) {
-                // Fondo verde con esquinas redondeadas
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(RoundedCornerShape(30.dp))
-                        .background(Color(0xff7fc297))
-                )
-
                 // Título
                 Text(
                     text = "Especies identificadas:",
@@ -130,18 +122,27 @@ fun CameraScreen() {
                     style = MaterialTheme.typography.headlineMedium,
                     modifier = Modifier
                         .align(Alignment.TopStart)
-                        .offset(x = 23.dp, y = 21.dp)
+                        .offset(x = 23.dp, y = 100.dp)
                         .requiredWidth(391.dp)
+                )
+                // Fondo verde con esquinas redondeadas
+                Box(
+                    modifier = Modifier
+                        .requiredWidth(400.dp)
+                        .requiredHeight(150.dp)
+                        .clip(RoundedCornerShape(30.dp))
+                        .background(Color(0xff7fc297))
+                        .offset(x= 40.dp, y = 100.dp)
                 )
 
                 // Nombre de la planta
                 Text(
                     text = name,
                     color = Color.White,
-                    style = TextStyle(fontSize = 15.sp),
+                    style = TextStyle(fontSize = 20.sp),
                     modifier = Modifier
                         .align(Alignment.TopStart)
-                        .offset(x = 147.dp, y = 104.dp)
+                        .offset(x = 100.dp, y = 50.dp)
                 )
             }
         } ?: Text(

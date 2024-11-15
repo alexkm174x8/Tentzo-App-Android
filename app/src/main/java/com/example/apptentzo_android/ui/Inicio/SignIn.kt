@@ -239,7 +239,7 @@ fun SignIn(navController: NavController, modifier: Modifier = Modifier) {
                                     "profile_picture" to ""
                                 )
                                 if (userId != null) {
-                                    db.collection("usuarios").document(userId)
+                                    db.collection("Usuario").document(userId)
                                         .set(user)
                                         .addOnSuccessListener {
                                             Log.d("Firebase", "Usuario registrado correctamente")
