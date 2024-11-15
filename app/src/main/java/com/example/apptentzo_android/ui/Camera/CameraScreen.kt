@@ -1,10 +1,15 @@
 package com.example.apptentzo_android.ui.Camera
 
 import android.Manifest
+import android.content.ContentValues
+import android.content.Context
 import android.graphics.Bitmap
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.os.Handler
 import android.os.Looper
+import android.provider.MediaStore
 import android.util.Base64
 import android.util.Log
 import android.widget.Toast
@@ -16,8 +21,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,16 +30,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
+import com.example.apptentzo_android.R
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.io.IOException
+import java.io.OutputStream
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,6 +60,7 @@ data class PlantInfo(
     val imageUrl: String
 )
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CameraScreen() {
     var imageBitmap by remember { mutableStateOf<Bitmap?>(null) }
@@ -96,99 +105,129 @@ fun CameraScreen() {
         }
     }
 
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        imageBitmap?.let { bitmap ->
-            Image(
-                bitmap = bitmap.asImageBitmap(),
-                contentDescription = "Imagen capturada",
-                modifier = Modifier.size(500.dp)
-                    .offset(y=40.dp)
-            )
-        } ?: run {
-            // Mensaje si es que no se otorgan permisos o no hay imagen
-            Text(text = "Permiso de cámara requerido.", color = Color.Red)
-        }
-
-
-        plantInfo?.let { info ->
-            // Popup con el diseño especificado
-            Text(
-                text = "Especie Encontrada",
-                color = Color.Black,
-                style = TextStyle(fontSize = 30.sp),
-                maxLines = 2,
-                modifier = Modifier
-                .offset(x = -60.dp, y = 100.dp)
-            )
-            Box(
-                modifier = Modifier
-                    .requiredWidth(490.dp)
-                    .requiredHeight(150.dp)
-                    .offset(x = 55.dp, y = 25.dp)
-                    .background(Color.White)
-            ) {
-
-                // Fondo verde con esquinas redondeadas
-                Box(
-                    modifier = Modifier
-                        .requiredWidth(380.dp)
-                        .requiredHeight(150.dp)
-                        .clip(RoundedCornerShape(30.dp))
-                        .background(Color(0xff7fc297))
-                        .offset(x = 40.dp, y = -10.dp)
-                ) {
-                    // Colocamos una Row para organizar la imagen y los textos
-                    Row(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .offset(y=10.dp)
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Imagen de la planta a la izquierda
-                        val painter = rememberAsyncImagePainter(info.imageUrl)
-                        Image(
-                            painter = painter,
-                            contentDescription = "Imagen de la planta",
-                            modifier = Modifier
-                                .size(90.dp)
-                                .offset(x = -10.dp)
-                        )
-
-                        Spacer(modifier = Modifier.width(16.dp))
-
-                        // Columna para los nombres a la derecha
-                        Column(
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            // Nombre común
-                            Text(
-                                text = info.name,
-                                color = Color.White,
-                                style = TextStyle(fontSize = 22.sp),
-                                maxLines = 2
-                            )
-
-                            // Nombre científico
-                            Text(
-                                text = info.scientificName,
-                                color = Color.White,
-                                style = TextStyle(fontSize = 18.sp),
-                                maxLines = 2
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { /* Puedes poner un título si lo deseas */ },
+                actions = {
+                    // Si hay una imagen, mostrar el ícono de descarga
+                    if (imageBitmap != null) {
+                        IconButton(onClick = {
+                            imageBitmap?.let { bitmap ->
+                                saveImageToGallery(context, bitmap)
+                            }
+                        }) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.descargar),
+                                contentDescription = "Descargar imagen",
+                                tint = Color.White
                             )
                         }
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xff7fc297)
+                )
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(top = 16.dp),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            imageBitmap?.let { bitmap ->
+                Image(
+                    bitmap = bitmap.asImageBitmap(),
+                    contentDescription = "Imagen capturada",
+                    modifier = Modifier
+                        .size(500.dp)
+                        .offset(y = 40.dp)
+                )
+            } ?: run {
+                // Mensaje si es que no se otorgan permisos o no hay imagen
+                Text(text = "Permiso de cámara requerido.", color = Color.Red)
             }
-        } ?: Text(
-            text = "No se ha identificado ninguna planta aún.",
-            fontSize = 18.sp,
-            color = Color.Gray
-        )
+
+            plantInfo?.let { info ->
+                // Título
+                Text(
+                    text = "Especie Encontrada",
+                    color = Color.Black,
+                    style = TextStyle(fontSize = 30.sp),
+                    maxLines = 2,
+                    modifier = Modifier
+                        .offset(x = -60.dp, y = 100.dp)
+                )
+                Box(
+                    modifier = Modifier
+                        .requiredWidth(490.dp)
+                        .requiredHeight(150.dp)
+                        .offset(x = 55.dp, y = 25.dp)
+                        .background(Color.White)
+                ) {
+
+                    // Fondo verde con esquinas redondeadas
+                    Box(
+                        modifier = Modifier
+                            .requiredWidth(380.dp)
+                            .requiredHeight(150.dp)
+                            .clip(RoundedCornerShape(30.dp))
+                            .background(Color(0xff7fc297))
+                            .offset(x = 40.dp, y = -10.dp)
+                    ) {
+                        // Colocamos una Row para organizar la imagen y los textos
+                        Row(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .offset(y = 10.dp)
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Imagen de la planta a la izquierda
+                            val painter = rememberAsyncImagePainter(info.imageUrl)
+                            Image(
+                                painter = painter,
+                                contentDescription = "Imagen de la planta",
+                                modifier = Modifier
+                                    .size(90.dp)
+                                    .offset(x = -10.dp)
+                            )
+
+                            Spacer(modifier = Modifier.width(16.dp))
+
+                            // Columna para los nombres a la derecha
+                            Column(
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                // Nombre común
+                                Text(
+                                    text = info.name,
+                                    color = Color.White,
+                                    style = TextStyle(fontSize = 22.sp),
+                                    maxLines = 2
+                                )
+
+                                // Nombre científico
+                                Text(
+                                    text = info.scientificName,
+                                    color = Color.White,
+                                    style = TextStyle(fontSize = 18.sp),
+                                    maxLines = 2
+                                )
+                            }
+                        }
+                    }
+                }
+            } ?: Text(
+                text = "No se ha identificado ninguna planta aún.",
+                fontSize = 18.sp,
+                color = Color.Gray
+            )
+        }
     }
 }
 
@@ -199,7 +238,7 @@ fun convertBitmapToBase64(bitmap: Bitmap): String {
     return Base64.encodeToString(byteArray, Base64.DEFAULT)
 }
 
-// Función modificada identifyPlant con callback
+// Función para identificar la planta
 fun identifyPlant(
     imageBase64: String,
     latitude: Double?,
@@ -215,7 +254,10 @@ fun identifyPlant(
         put("images", listOf("data:image/jpeg;base64,$imageBase64"))
         put("modifiers", listOf("similar_images"))
         put("plant_language", "es")
-        put("plant_details", listOf("common_names", "url", "name_authority", "wiki_description", "taxonomy"))
+        put(
+            "plant_details",
+            listOf("common_names", "url", "name_authority", "wiki_description", "taxonomy")
+        )
         if (latitude != null && longitude != null) {
             put("latitude", latitude)
             put("longitude", longitude)
@@ -331,4 +373,38 @@ fun identifyPlant(
             }
         }
     })
+}
+
+// Función para guardar la imagen en la galería
+fun saveImageToGallery(context: Context, bitmap: Bitmap) {
+    val filename = "Imagen_${System.currentTimeMillis()}.jpg"
+    val outputStream: OutputStream?
+    val contentValues = ContentValues().apply {
+        put(MediaStore.Images.Media.DISPLAY_NAME, filename)
+        put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+        put(MediaStore.Images.Media.WIDTH, bitmap.width)
+        put(MediaStore.Images.Media.HEIGHT, bitmap.height)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
+            put(MediaStore.Images.Media.IS_PENDING, 1)
+        }
+    }
+
+    val contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+    val uri = context.contentResolver.insert(contentUri, contentValues)
+
+    if (uri != null) {
+        outputStream = context.contentResolver.openOutputStream(uri)
+        outputStream?.use {
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, it)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            contentValues.clear()
+            contentValues.put(MediaStore.Images.Media.IS_PENDING, 0)
+            context.contentResolver.update(uri, contentValues, null, null)
+        }
+        Toast.makeText(context, "Imagen guardada en la galería", Toast.LENGTH_SHORT).show()
+    } else {
+        Toast.makeText(context, "Error al guardar la imagen", Toast.LENGTH_SHORT).show()
+    }
 }
