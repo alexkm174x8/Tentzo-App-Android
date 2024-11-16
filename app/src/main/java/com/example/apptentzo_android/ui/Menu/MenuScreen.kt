@@ -739,7 +739,7 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
                                     ),
                                     modifier = Modifier
                                         .align(alignment = Alignment.TopCenter)
-                                        .padding(top = 22.dp, start = 22.dp, end = 22.dp)
+                                        .padding(top = 15.dp, start = 22.dp, end = 22.dp)
                                         .requiredHeight(height = 62.dp)
                                         .wrapContentHeight(align = Alignment.CenterVertically)
                                 )
