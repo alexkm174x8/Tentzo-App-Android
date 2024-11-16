@@ -128,6 +128,18 @@ fun CameraScreen() {
         topBar = {
             TopAppBar(
                 title = { /* Puedes poner un título si lo deseas */ },
+                navigationIcon = {
+                    IconButton(onClick = {
+                        // Reiniciar la captura de la foto
+                        imageBitmap = null
+                    }) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.cargando), // Asegúrate de que este recurso exista
+                            contentDescription = "Retomar foto",
+                            tint = Color.White
+                        )
+                    }
+                },
                 actions = {
                     // Si hay una imagen, mostrar el ícono de descarga
                     if (imageBitmap != null) {
@@ -249,6 +261,7 @@ fun CameraScreen() {
         }
     }
 }
+
 
 fun convertBitmapToBase64(bitmap: Bitmap): String {
     val outputStream = ByteArrayOutputStream()
