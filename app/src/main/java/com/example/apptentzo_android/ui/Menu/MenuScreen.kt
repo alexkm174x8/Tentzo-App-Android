@@ -2,7 +2,7 @@ package com.example.apptentzo_android.ui.Menu
 
 import android.content.Intent
 import android.net.Uri
-import android.provider.MediaStore
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -41,6 +41,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
@@ -60,7 +61,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalInspectionMode
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -74,6 +74,8 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.apptentzo_android.R
+import com.example.apptentzo_android.ui.Info.SocialMedia
+import com.example.apptentzo_android.ui.model.Actividad
 import com.example.apptentzo_android.ui.model.Insignia
 import com.example.apptentzo_android.ui.model.InsigniaRequirement
 import com.example.apptentzo_android.ui.model.Parameter
@@ -89,23 +91,28 @@ import kotlin.random.Random
 
 @Composable
 fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifier) {
-    var showDialog by remember { mutableStateOf(false) }
+    // Estados para controlar los diálogos
+    var showViewDialog by remember { mutableStateOf(false) }
     var showDialogInsignia by remember { mutableStateOf(false) }
     var showDialogFlor by remember { mutableStateOf(false) }
+    var showEditDialog by remember { mutableStateOf(false) }
     var selectedInsignia: Insignia? by remember { mutableStateOf(null) }
     val context = LocalContext.current
 
     val mAuth = FirebaseAuth.getInstance()
     val currentUser = mAuth.currentUser
-    val userId = currentUser?.uid
 
     var usuario by remember { mutableStateOf<Usuario?>(null) }
+    val userId = currentUser?.uid
     var insigniasList by remember { mutableStateOf<List<Insignia>>(emptyList()) }
     var florDelDia by remember { mutableStateOf<Planta?>(null) }
     var isLoading by remember { mutableStateOf(true) }
 
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    // Definir la URL de la imagen predeterminada
+    val defaultImageUrl = "res/drawable/foto.png" // Reemplaza con tu URL real
 
     // Launcher para seleccionar imagen de la galería
     val imagePickerLauncher = rememberLauncherForActivityResult(
@@ -117,7 +124,7 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
                 try {
                     val storageRef = FirebaseStorage.getInstance().reference
                     val profileImagesRef = storageRef.child("profileImages/${userId}/${UUID.randomUUID()}")
-                    val uploadTask = profileImagesRef.putFile(uri).await()
+                    profileImagesRef.putFile(uri).await()
                     val downloadUrl = profileImagesRef.downloadUrl.await().toString()
 
                     // Actualizar la URL en Firestore
@@ -202,6 +209,7 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
     }
 
     if (isLoading) {
+        // Mostrar indicador de carga
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
@@ -377,6 +385,7 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
                     )
                 }
 
+                // Títulos adicionales
                 Text(
                     text = "Senderista",
                     color = Color.Black,
@@ -412,8 +421,8 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
                 // Foto de perfil
                 IconButton(
                     onClick = {
-                        // Mostrar diálogo con la foto de perfil
-                        showDialog = true
+                        // Mostrar diálogo para ver la imagen
+                        showViewDialog = true
                     },
                     modifier = Modifier
                         .align(Alignment.TopStart)
@@ -428,7 +437,7 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
                                 .requiredSize(134.dp)
-                                .clip(shape = RoundedCornerShape(100.dp))
+                                .clip(RoundedCornerShape(100.dp))
                         )
                     } else {
                         Image(
@@ -436,7 +445,7 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
                             contentDescription = "foto_perfil",
                             modifier = Modifier
                                 .requiredSize(134.dp)
-                                .clip(shape = RoundedCornerShape(100.dp))
+                                .clip(RoundedCornerShape(100.dp))
                         )
                     }
                 }
@@ -444,8 +453,8 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
                 // Botón de editar perfil
                 IconButton(
                     onClick = {
-                        // Lanzar el selector de imágenes
-                        imagePickerLauncher.launch("image/*")
+                        // Mostrar diálogo de edición
+                        showEditDialog = true
                     },
                     modifier = Modifier
                         .align(alignment = Alignment.TopStart)
@@ -489,44 +498,48 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
                         .requiredHeight(height = 83.dp)
                 )
 
-                // Diálogo de la foto de perfil
-                if (showDialog) {
+                // Diálogo para ver la foto de perfil
+                if (showViewDialog) {
                     Dialog(
-                        onDismissRequest = { showDialog = false },
+                        onDismissRequest = { showViewDialog = false },
                         properties = DialogProperties(dismissOnBackPress = true)
                     ) {
-                        val imageUrl = user.foto_perfil
-                        Box(
+                        Surface(
+                            shape = RoundedCornerShape(30.dp),
+                            color = Color.White,
+                            border = BorderStroke(3.dp, Color.White),
                             modifier = Modifier
-                                .size(width = 368.dp, height = 351.dp)
+                                .clip(shape = RoundedCornerShape(30.dp))
                         ) {
-                            if (imageUrl != null && imageUrl.isNotEmpty()) {
-                                AsyncImage(
-                                    model = imageUrl,
-                                    contentDescription = "foto_perfil",
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier
-                                        .align(Alignment.TopStart)
-                                        .offset(x = (-4).dp, y = (-13).dp)
-                                        .requiredWidth(width = 377.dp)
-                                        .requiredHeight(height = 378.dp)
-                                )
-                            } else {
-                                Image(
-                                    painter = painterResource(id = R.drawable.foto), // Imagen predeterminada
-                                    contentDescription = "foto_perfil",
-                                    modifier = Modifier
-                                        .align(Alignment.TopStart)
-                                        .offset(x = (-4).dp, y = (-13).dp)
-                                        .requiredWidth(width = 377.dp)
-                                        .requiredHeight(height = 378.dp)
-                                )
+                            Box(
+                                modifier = Modifier
+                                    .requiredWidth(width = 343.dp)
+                                    .requiredHeight(height = 351.dp)
+                            ) {
+                                if (user.foto_perfil != null && user.foto_perfil.isNotEmpty()) {
+                                    AsyncImage(
+                                        model = user.foto_perfil,
+                                        contentDescription = "foto_perfil",
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier
+                                            .align(Alignment.Center)
+                                            .fillMaxSize()
+                                    )
+                                } else {
+                                    Image(
+                                        painter = painterResource(id = R.drawable.foto), // Imagen predeterminada
+                                        contentDescription = "foto_perfil",
+                                        modifier = Modifier
+                                            .align(Alignment.Center)
+                                            .fillMaxSize()
+                                    )
+                                }
                             }
                         }
                     }
                 }
 
-                // Diálogo de la insignia seleccionada
+                // Diálogo de insignia seleccionada
                 if (showDialogInsignia && selectedInsignia != null) {
                     val unlocked = isInsigniaUnlocked(selectedInsignia!!.id, user, insigniaRequirements)
                     Dialog(
@@ -630,7 +643,7 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
                                         .offset(x = 70.dp, y = 28.dp)
                                         .requiredWidth(width = 250.dp)
                                         .requiredHeight(height = 190.dp)
-                                        .clip(shape = RoundedCornerShape(60.dp)),
+                                        .clip(RoundedCornerShape(60.dp)),
                                     contentScale = ContentScale.Crop
                                 )
                                 // Título: "Especie del Día"
@@ -698,10 +711,123 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
                     }
                 }
 
-                // Mostrar mensajes de Snackbar
-                LaunchedEffect(snackbarHostState) {
-                    snackbarHostState.currentSnackbarData?.dismiss()
+                // Diálogo de edición de perfil
+                if (showEditDialog) {
+                    Dialog(
+                        onDismissRequest = { showEditDialog = false },
+                        properties = DialogProperties(dismissOnBackPress = true)
+                    ) {
+                        Surface(
+                            shape = RoundedCornerShape(30.dp),
+                            color = Color.White,
+                            border = BorderStroke(3.dp, Color.White),
+                            modifier = Modifier
+                                .clip(shape = RoundedCornerShape(30.dp))
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .requiredWidth(width = 343.dp)
+                                    .requiredHeight(height = 137.dp)
+                            ) {
+                                Text(
+                                    text = "¿Qué deseas realizar?",
+                                    color = Color(0xff000003),
+                                    textAlign = TextAlign.Center,
+                                    style = TextStyle(
+                                        fontSize = 25.sp,
+                                        fontWeight = FontWeight.Bold
+                                    ),
+                                    modifier = Modifier
+                                        .align(alignment = Alignment.TopCenter)
+                                        .padding(top = 22.dp, start = 22.dp, end = 22.dp)
+                                        .requiredHeight(height = 62.dp)
+                                        .wrapContentHeight(align = Alignment.CenterVertically)
+                                )
+                                // Botón "Eliminar"
+                                Box(
+                                    modifier = Modifier
+                                        .align(alignment = Alignment.BottomStart)
+                                        .padding(start = 22.dp, bottom = 22.dp)
+                                        .width(149.dp)
+                                        .height(49.dp)
+                                        .clip(shape = RoundedCornerShape(25.dp))
+                                        .background(color = Color(0xff7fc297))
+                                        .clickable {
+                                            // Eliminar la foto de perfil y establecer la imagen predeterminada
+                                            coroutineScope.launch {
+                                                try {
+                                                    val db = FirebaseFirestore.getInstance()
+                                                    // Define la URL de la imagen predeterminada
+                                                    val defaultImageUrl = "https://yourapp.com/default_foto.png" // Reemplaza con tu URL real
+
+                                                    // Actualizar Firestore solo si userId no es nulo
+                                                    userId?.let { nonNullUserId ->
+                                                        db.collection("Usuario").document(nonNullUserId)
+                                                            .update("foto_perfil", defaultImageUrl)
+                                                            .await()
+
+                                                        // Actualizar el estado local del usuario
+                                                        usuario = usuario?.copy(foto_perfil = defaultImageUrl)
+
+                                                        showEditDialog = false
+
+                                                        snackbarHostState.showSnackbar("Foto de perfil eliminada")
+
+                                                    } ?: run {
+                                                        // Manejar el caso cuando userId es nulo
+                                                        Log.e("HomeScreen", "Error: userId es nulo. No se pudo actualizar la foto de perfil.")
+                                                        snackbarHostState.showSnackbar("Error al eliminar la foto de perfil: usuario no autenticado.")
+                                                    }
+
+                                                } catch (e: Exception) {
+                                                    e.printStackTrace()
+                                                    snackbarHostState.showSnackbar("Error al eliminar la foto de perfil")
+                                                }
+                                            }
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "Eliminar",
+                                        color = Color(0xff000003),
+                                        textAlign = TextAlign.Center,
+                                        style = TextStyle(
+                                            fontSize = 18.sp
+                                        )
+                                    )
+                                }
+                                // Botón "Cambiar"
+                                Box(
+                                    modifier = Modifier
+                                        .align(alignment = Alignment.BottomEnd)
+                                        .padding(end = 22.dp, bottom = 22.dp)
+                                        .width(142.dp)
+                                        .height(46.dp)
+                                        .clip(shape = RoundedCornerShape(25.dp))
+                                        .background(color = Color(0xffd3fde2))
+                                        .clickable {
+                                            // Cerrar el diálogo y lanzar el selector de imágenes
+                                            showEditDialog = false
+                                            imagePickerLauncher.launch("image/*")
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "Cambiar",
+                                        color = Color(0xff000003),
+                                        textAlign = TextAlign.Center,
+                                        style = TextStyle(
+                                            fontSize = 18.sp
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
+
+                // Mostrar mensajes de Snackbar
+                SnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
             }
         } ?: run {
             // Si no se pudo cargar la información del usuario
@@ -711,6 +837,7 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
         }
     }
 }
+
 // Función auxiliar para verificar si la insignia está desbloqueada
 fun isInsigniaUnlocked(insigniaId: String, usuario: Usuario, requirements: List<InsigniaRequirement>): Boolean {
     val requirement = requirements.find { it.insigniaId == insigniaId }
@@ -723,5 +850,59 @@ fun isInsigniaUnlocked(insigniaId: String, usuario: Usuario, requirements: List<
         userCount >= requirement.requiredCount
     } else {
         false
+    }
+}
+
+@Composable
+fun ActividadItem(actividad: Actividad, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(150.dp)
+            .padding(vertical = 10.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .clickable { onClick() },
+        contentAlignment = Alignment.BottomStart
+    ) {
+        // Cargar imagen desde URL usando Coil
+        AsyncImage(
+            model = actividad.imagen,
+            contentDescription = "Fondo de Actividad",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(RoundedCornerShape(20.dp))
+        )
+        Text(
+            text = actividad.nombre,
+            color = Color.White,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier
+                .padding(20.dp)
+        )
+    }
+}
+
+@Composable
+fun SocialIcon(socialMedia: SocialMedia) {
+    val context = LocalContext.current
+    Box(
+        modifier = Modifier
+            .size(70.dp)
+            .clip(RoundedCornerShape(15.dp))
+            .background(color = Color(0xffE9F4CA))
+            .clickable {
+                // Abrir el enlace correspondiente
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(socialMedia.url))
+                context.startActivity(intent)
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            painter = painterResource(id = socialMedia.iconRes),
+            contentDescription = socialMedia.name,
+            modifier = Modifier.size(40.dp)
+        )
     }
 }
