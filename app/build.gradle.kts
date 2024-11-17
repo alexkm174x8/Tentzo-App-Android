@@ -98,6 +98,7 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.storage.ktx)
     implementation(libs.androidx.media3.exoplayer)
+    implementation(libs.play.services.location)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
