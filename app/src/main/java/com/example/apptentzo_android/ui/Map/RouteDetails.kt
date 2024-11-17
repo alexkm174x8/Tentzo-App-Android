@@ -185,7 +185,7 @@ fun RouteDetails(navController: NavHostController, rutaId: String?, modifier: Mo
                     // Botón para iniciar ruta
                     Button(
                         onClick = {
-                            navController.navigate("RouteDisplay/${rutaId}")
+                            navController.navigate("RouteDisplayContent/${rutaId}")
                         },
                         modifier = Modifier
                             .fillMaxWidth()

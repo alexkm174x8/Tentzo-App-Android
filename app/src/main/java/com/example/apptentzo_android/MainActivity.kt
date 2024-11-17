@@ -28,7 +28,6 @@ import com.example.apptentzo_android.ui.Login.Login
 import com.example.apptentzo_android.ui.Map.MapScreen
 import com.example.apptentzo_android.ui.Map.RouteDetails
 import com.example.apptentzo_android.ui.Map.RouteDisplayContent
-import com.example.apptentzo_android.ui.Map.RouteDisplayContent
 import com.example.apptentzo_android.ui.Menu.HomeScreen
 import com.example.apptentzo_android.ui.SignIn.SignIn
 import com.example.biblioteca.PlantBank
@@ -117,13 +116,13 @@ fun MainScreen() {
                 composable("RouteDisplayContent/{rutaId}") { backStackEntry ->
                     val rutaId = backStackEntry.arguments?.getString("rutaId")
                     rutaId?.let {
-                        RouteDisplayContent(rutaId = it)
+                        RouteDisplayContent(rutaId = it, navController = navController)
                     }
                 }
                 composable("fetchRouteFromFirebase/{rutaId}") { backStackEntry ->
                     val rutaId = backStackEntry.arguments?.getString("rutaId")
                     rutaId?.let {
-                        RouteDisplayContent(rutaId = it)
+                        RouteDisplayContent(rutaId = it, navController = navController)
                     }
                 }
 
