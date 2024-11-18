@@ -78,16 +78,6 @@ fun MainScreen() {
                 composable("library_screen") {
                     PlantBank(navController)
                 }
-                composable("library_screen") {
-                    PlantBank(navController = navController)
-                }
-                composable(
-                    route = "plant_details_screen/{plantaId}",
-                    arguments = listOf(navArgument("plantaId") { type = NavType.StringType })
-                ) { backStackEntry ->
-                    val plantaId = backStackEntry.arguments?.getString("plantaId") ?: ""
-                    PlantInfo(navController = navController, plantaId = plantaId)
-                }
                 composable("camera_screen") {
                     CameraScreen()
                 }
@@ -97,35 +87,15 @@ fun MainScreen() {
                 composable("info_screen") {
                     InfoScreen(navController)
                 }
-                composable("InfoDetails/{actividadId}") { backStackEntry ->
-                    val actividadId = backStackEntry.arguments?.getString("actividadId")
-                    actividadId?.let {
-                        InfoDetails(actividadId = it, navController = navController)
-                    }
+                composable("login_screen") {
+                    Login(navController)
                 }
-                // Actualización: RouteDetails ahora recibe rutaId como parámetro
-                composable(
-                    "RouteDetails/{rutaId}",
-                    arguments = listOf(navArgument("rutaId") { type = NavType.StringType })
-                ) { backStackEntry ->
-                    val rutaId = backStackEntry.arguments?.getString("rutaId")
-                    rutaId?.let {
-                        RouteDetails(navController = navController, rutaId = it)
-                    }
+                composable("logo_screen") {
+                    Logo(navController)
                 }
-                composable("RouteDisplayContent/{rutaId}") { backStackEntry ->
-                    val rutaId = backStackEntry.arguments?.getString("rutaId")
-                    rutaId?.let {
-                        RouteDisplayContent(rutaId = it, navController = navController)
-                    }
+                composable("signin_screen") {
+                    SignIn(navController)
                 }
-                composable("fetchRouteFromFirebase/{rutaId}") { backStackEntry ->
-                    val rutaId = backStackEntry.arguments?.getString("rutaId")
-                    rutaId?.let {
-                        RouteDisplayContent(rutaId = it, navController = navController)
-                    }
-                }
-
             }
         }
     } else {
