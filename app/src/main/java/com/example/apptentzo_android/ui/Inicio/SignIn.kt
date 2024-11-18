@@ -191,17 +191,17 @@ fun SignIn(navController: NavController, modifier: Modifier = Modifier) {
                         auth.createUserWithEmailAndPassword(email, password)
                             .addOnCompleteListener { task ->
                                 if (task.isSuccessful) {
-                                    val userId = auth.currentUser?.uid
+                                    val user_id = auth.currentUser?.uid
                                     val user = hashMapOf(
-                                        "user_id" to userId,
+                                        "user_id" to user_id,
                                         "nombre" to name,
                                         "email" to email,
                                         "rutas" to 0,
                                         "plantas" to 0,
                                         "foto_perfil" to ""
                                     )
-                                    if (userId != null) {
-                                        db.collection("Usuario").document(userId)
+                                    if (user_id != null) {
+                                        db.collection("Usuario").document(user_id)
                                             .set(user)
                                             .addOnSuccessListener {
                                                 Log.d("Firebase", "Usuario registrado correctamente")
@@ -242,29 +242,6 @@ fun SignIn(navController: NavController, modifier: Modifier = Modifier) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Botón para iniciar sesión con Google (puedes agregar la funcionalidad)
-            Text(
-                text = "O regístrate con",
-                color = Color.Gray,
-                style = TextStyle(fontSize = 16.sp)
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Ícono de Google
-            IconButton(
-                onClick = {
-                    // Manejo para iniciar sesión con Google
-                },
-                modifier = Modifier
-                    .size(64.dp)
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.google),
-                    contentDescription = "Iniciar sesión con Google",
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
         }
 
         // Diálogo de error

@@ -326,7 +326,6 @@ private fun checkAndIncrementRoute(
                 .addOnFailureListener { e ->
                     Log.e("RouteDisplay", "Error al incrementar el atributo 'ruta'.", e)
                 }
-
         }
     }
 }

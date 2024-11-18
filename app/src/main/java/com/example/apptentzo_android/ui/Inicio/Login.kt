@@ -26,6 +26,8 @@ fun Login(navController: NavController, modifier: Modifier = Modifier) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var showErrorDialog by remember { mutableStateOf(false) }
+    var showResetDialog by remember { mutableStateOf(false) }
+    var showSuccessDialog by remember { mutableStateOf(false) }
     var auth = FirebaseAuth.getInstance()
 
     Box(
@@ -109,17 +111,22 @@ fun Login(navController: NavController, modifier: Modifier = Modifier) {
                     .clip(RoundedCornerShape(8.dp))
                     .background(color = Color(0xff7fc297))
                     .clickable {
-                        auth.signInWithEmailAndPassword(email, password)
-                            .addOnCompleteListener { task ->
-                                if (task.isSuccessful) {
-                                    navController.navigate("menu_screen") {
-                                        popUpTo("login_screen") { inclusive = true }
+                        if (email.isBlank() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                            showErrorDialog = true
+                            Log.w("Firebase", "Correo electrónico inválido")
+                        } else {
+                            auth.signInWithEmailAndPassword(email, password)
+                                .addOnCompleteListener { task ->
+                                    if (task.isSuccessful) {
+                                        navController.navigate("menu_screen") {
+                                            popUpTo("login_screen") { inclusive = true }
+                                        }
+                                    } else {
+                                        showErrorDialog = true // Mostrar el diálogo de error
+                                        Log.w("Firebase", "Error en inicio de sesión", task.exception)
                                     }
-                                } else {
-                                    showErrorDialog = true // Mostrar el diálogo de error
-                                    Log.w("Firebase", "Error en inicio de sesión", task.exception)
                                 }
-                            }
+                        }
                     },
                 contentAlignment = Alignment.Center
             ) {
@@ -141,7 +148,14 @@ fun Login(navController: NavController, modifier: Modifier = Modifier) {
                 style = TextStyle(fontSize = 20.sp),
                 modifier = Modifier
                     .padding(top = 20.dp)
-                    .clickable { /* Manejar clic para recuperar contraseña */ }
+                    .clickable {
+                        if (email.isBlank() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                            showErrorDialog = true
+                            Log.w("Firebase", "Correo electrónico inválido para recuperación")
+                        } else {
+                            showResetDialog = true
+                        }
+                    }
             )
         }
     }
@@ -151,7 +165,7 @@ fun Login(navController: NavController, modifier: Modifier = Modifier) {
         AlertDialog(
             onDismissRequest = { showErrorDialog = false },
             title = { Text(text = "Error") },
-            text = { Text(text = "Contraseña incorrecta. Intenta de nuevo.") },
+            text = { Text(text = "Correo o contraseña incorrecta. Intenta de nuevo.") },
             confirmButton = {
                 TextButton(
                     onClick = { showErrorDialog = false }
@@ -161,4 +175,68 @@ fun Login(navController: NavController, modifier: Modifier = Modifier) {
             }
         )
     }
+
+    // Diálogo de confirmación para enviar el correo de recuperación
+    if (showResetDialog) {
+        AlertDialog(
+            onDismissRequest = { showResetDialog = false },
+            title = { Text(text = "Recuperar Contraseña") },
+            text = { Text(text = "¿Deseas enviar un correo para restablecer tu contraseña a $email?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        sendPasswordResetEmail(email) {
+                            showResetDialog = false
+                            showSuccessDialog = true
+                        }
+                    }
+                ) {
+                    Text("Sí")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showResetDialog = false }
+                ) {
+                    Text("No")
+                }
+            }
+        )
+    }
+
+    // Diálogo de éxito al enviar el correo de recuperación
+    if (showSuccessDialog) {
+        AlertDialog(
+            onDismissRequest = { showSuccessDialog = false },
+            title = { Text(text = "Correo Enviado") },
+            text = { Text(text = "Se ha enviado un correo a $email para restablecer tu contraseña.") },
+            confirmButton = {
+                TextButton(
+                    onClick = { showSuccessDialog = false }
+                ) {
+                    Text("OK")
+                }
+            }
+        )
+    }
+}
+
+/**
+ * Función para enviar el correo de restablecimiento de contraseña.
+ *
+ * @param email Correo electrónico del usuario.
+ * @param onSuccess Callback a ejecutar cuando el correo se envíe exitosamente.
+ */
+private fun sendPasswordResetEmail(email: String, onSuccess: () -> Unit) {
+    val auth = FirebaseAuth.getInstance()
+    auth.sendPasswordResetEmail(email)
+        .addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                onSuccess()
+                Log.d("Firebase", "Correo de restablecimiento de contraseña enviado a $email")
+            } else {
+                Log.e("Firebase", "Error al enviar correo de restablecimiento", task.exception)
+                // Aquí puedes manejar el error mostrando otro diálogo o mensaje
+            }
+        }
 }

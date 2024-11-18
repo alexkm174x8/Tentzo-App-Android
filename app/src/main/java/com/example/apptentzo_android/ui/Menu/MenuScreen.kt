@@ -103,7 +103,7 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
     val currentUser = mAuth.currentUser
 
     var usuario by remember { mutableStateOf<Usuario?>(null) }
-    val userId = currentUser?.uid
+    val user_id = currentUser?.uid
     var insigniasList by remember { mutableStateOf<List<Insignia>>(emptyList()) }
     var florDelDia by remember { mutableStateOf<Planta?>(null) }
     var isLoading by remember { mutableStateOf(true) }
@@ -118,18 +118,18 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        if (uri != null && userId != null) {
+        if (uri != null && user_id != null) {
             // Subir imagen a Firebase Storage y actualizar Firestore
             coroutineScope.launch {
                 try {
                     val storageRef = FirebaseStorage.getInstance().reference
-                    val profileImagesRef = storageRef.child("profileImages/${userId}/${UUID.randomUUID()}")
+                    val profileImagesRef = storageRef.child("profileImages/${user_id}/${UUID.randomUUID()}")
                     profileImagesRef.putFile(uri).await()
                     val downloadUrl = profileImagesRef.downloadUrl.await().toString()
 
                     // Actualizar la URL en Firestore
                     val db = FirebaseFirestore.getInstance()
-                    db.collection("Usuario").document(userId)
+                    db.collection("Usuario").document(user_id)
                         .update("foto_perfil", downloadUrl)
                         .await()
 
@@ -147,14 +147,14 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
     }
 
     // Obtener datos del usuario, insignias y planta aleatoria desde Firestore
-    LaunchedEffect(userId) {
+    LaunchedEffect(user_id) {
         isLoading = true
-        if (userId != null) {
+        if (user_id != null) {
             try {
                 val db = FirebaseFirestore.getInstance()
                 // Obtener datos del usuario
-                val userSnapshot = db.collection("Usuario").document(userId).get().await()
-                usuario = userSnapshot.toObject(Usuario::class.java)?.copy(id = userId)
+                val userSnapshot = db.collection("Usuario").document(user_id).get().await()
+                usuario = userSnapshot.toObject(Usuario::class.java)?.copy(id = user_id)
 
                 // Obtener insignias
                 val insigniaSnapshots = db.collection("Insignia").get().await()
@@ -761,7 +761,7 @@ fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifi
                                                     val defaultImageUrl = "https://yourapp.com/default_foto.png" // Reemplaza con tu URL real
 
                                                     // Actualizar Firestore solo si userId no es nulo
-                                                    userId?.let { nonNullUserId ->
+                                                    user_id?.let { nonNullUserId ->
                                                         db.collection("Usuario").document(nonNullUserId)
                                                             .update("foto_perfil", defaultImageUrl)
                                                             .await()
