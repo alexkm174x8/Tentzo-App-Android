@@ -69,7 +69,7 @@ fun MainScreen() {
         ) { innerPadding ->
             NavHost(
                 navController = navController,
-                startDestination = "menu_screen",
+                startDestination = "logo_screen",
                 modifier = Modifier.padding(innerPadding)
             ) {
                 composable("menu_screen") {
@@ -108,6 +108,9 @@ fun MainScreen() {
             }
             composable("signin_screen") {
                 SignIn(navController)
+            }
+            composable("menu_screen") {
+                HomeScreen(navController)
             }
         }
     }

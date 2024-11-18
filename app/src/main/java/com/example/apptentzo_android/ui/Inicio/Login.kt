@@ -118,9 +118,9 @@ fun Login(navController: NavController, modifier: Modifier = Modifier) {
                             auth.signInWithEmailAndPassword(email, password)
                                 .addOnCompleteListener { task ->
                                     if (task.isSuccessful) {
-                                        navController.navigate("menu_screen") {
-                                            popUpTo("login_screen") { inclusive = true }
-                                        }
+                                        navController.navigate("menu_screen")
+                                        Log.d("Firebase", "INICIANDO SESIÓN")
+
                                     } else {
                                         showErrorDialog = true // Mostrar el diálogo de error
                                         Log.w("Firebase", "Error en inicio de sesión", task.exception)

@@ -72,7 +72,7 @@ import kotlinx.coroutines.tasks.await
 import java.util.UUID
 
 @Composable
-fun HomeScreen(navController: NavController? = null, modifier: Modifier = Modifier) {
+fun HomeScreen(navController: NavController, modifier: Modifier = Modifier) {
     // Estados para controlar los diálogos
     var showViewDialog by remember { mutableStateOf(false) }
     var showDialogInsignia by remember { mutableStateOf(false) }
