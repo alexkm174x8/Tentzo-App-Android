@@ -84,8 +84,13 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.1.0")
     // OkHttp para manejo de autenticación básica
     implementation("com.squareup.okhttp3:okhttp:4.10.0")
+    implementation(libs.play.services.location)
     // Interceptor de logging para OkHttp
     implementation("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.2")
+
+    implementation ("com.google.android.gms:play-services-location:21.0.1")
+
+
 
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

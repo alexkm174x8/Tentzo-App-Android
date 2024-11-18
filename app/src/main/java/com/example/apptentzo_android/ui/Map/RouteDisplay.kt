@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -16,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
@@ -32,6 +34,8 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.model.*
 import com.google.maps.android.ktx.awaitMap
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 import kotlin.math.atan2
@@ -51,9 +55,12 @@ fun RouteDisplayContent(rutaId: String?, navController: NavController) {
     var isRouteLoading by remember { mutableStateOf(true) }
     var isFollowingRoute by remember { mutableStateOf(false) }
     var nextPointBearing by remember { mutableStateOf(0f) }
+    var totalRouteDistance by remember { mutableStateOf(0.0) }
+    var walkedDistance by remember { mutableStateOf(0.0) }
+    var hasIncremented by remember { mutableStateOf(false) } // Bandera para evitar múltiples incrementos
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Back button
+        // Botón de retroceso
         Image(
             painter = painterResource(id = R.drawable.arrow_back),
             contentDescription = "Atrás",
@@ -68,18 +75,19 @@ fun RouteDisplayContent(rutaId: String?, navController: NavController) {
                 .zIndex(1f)
         )
 
-        // Map view
+        // Vista del mapa
         AndroidView(factory = { mapView }) { androidMapView ->
             coroutineScope.launch {
                 val googleMap = androidMapView.awaitMap()
 
-                // Enable location tracking on map
+                // Habilitar seguimiento de ubicación en el mapa
                 googleMap.isMyLocationEnabled = true
 
                 rutaId?.let {
                     fetchRouteFromFirebase(it) { routePoints ->
                         if (routePoints.isNotEmpty()) {
                             drawRouteOnMap(googleMap, routePoints)
+                            totalRouteDistance = calculateTotalDistance(routePoints)
                             isRouteLoading = false
 
                             if (isFollowingRoute) {
@@ -89,6 +97,10 @@ fun RouteDisplayContent(rutaId: String?, navController: NavController) {
                                     routePoints = routePoints,
                                     onBearingCalculated = { bearing ->
                                         nextPointBearing = bearing
+                                    },
+                                    onDistanceUpdated = { distance ->
+                                        walkedDistance = distance
+                                        checkAndIncrementRoute(walkedDistance, totalRouteDistance, hasIncremented)
                                     }
                                 )
                             }
@@ -104,7 +116,7 @@ fun RouteDisplayContent(rutaId: String?, navController: NavController) {
             }
         }
 
-        // Rotating arrow on top of user's location
+        // Flecha rotativa sobre la ubicación del usuario
         if (isFollowingRoute) {
             Box(
                 modifier = Modifier
@@ -117,12 +129,12 @@ fun RouteDisplayContent(rutaId: String?, navController: NavController) {
                     contentDescription = "Direction Arrow",
                     modifier = Modifier
                         .size(64.dp)
-                        .graphicsLayer(rotationZ = nextPointBearing) // Rotates the arrow
+                        .graphicsLayer(rotationZ = nextPointBearing) // Rota la flecha
                 )
             }
         }
 
-        // Loading indicator
+        // Indicador de carga
         if (isRouteLoading) {
             Box(
                 modifier = Modifier
@@ -134,25 +146,42 @@ fun RouteDisplayContent(rutaId: String?, navController: NavController) {
             }
         }
 
-        // Button to start/stop route-following mode
         Button(
-            onClick = { isFollowingRoute = !isFollowingRoute },
+            onClick = {
+                isFollowingRoute = !isFollowingRoute
+                if (isFollowingRoute && !hasIncremented) {
+                    walkedDistance = 0.0 // Reiniciar distancia al comenzar
+                }
+            },
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xff7FC297)), // Establece el color de fondo aquí
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(16.dp)
-                .background(Color.Green.copy(alpha = 0.7f), shape = CircleShape)
-                .zIndex(1f) // Ensure the button stays on top
+                .clip(shape = RoundedCornerShape(30.dp))
+                .zIndex(1f) // Asegura que el botón permanezca encima
         ) {
             Text(
-                text = if (isFollowingRoute) "Stop Following" else "Start Following",
-                color = Color.Black,
+                text = if (isFollowingRoute) "Detener" else "Empezar",
+                color = Color.White,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
         }
     }
 }
 
-// Function to fetch route points from Firebase
+// Función para obtener la vista del mapa con el ciclo de vida adecuado
+@Composable
+fun rememberMapViewWithLifecycle(): MapView {
+    val context = LocalContext.current
+    val mapView = remember { MapView(context).apply { onCreate(Bundle()) } }
+    DisposableEffect(mapView) {
+        mapView.onResume()
+        onDispose { mapView.onPause() }
+    }
+    return mapView
+}
+
+// Función para obtener los puntos de la ruta desde Firebase
 private fun fetchRouteFromFirebase(rutaId: String, onRouteReady: (List<LatLng>) -> Unit) {
     val db = FirebaseFirestore.getInstance()
     val rutaCollection = db.collection("Coordenada")
@@ -177,7 +206,7 @@ private fun fetchRouteFromFirebase(rutaId: String, onRouteReady: (List<LatLng>) 
         }
 }
 
-// Function to draw the route on the map
+// Función para dibujar la ruta en el mapa
 private fun drawRouteOnMap(map: GoogleMap, routePoints: List<LatLng>) {
     val polylineOptions = PolylineOptions()
         .addAll(routePoints)
@@ -185,41 +214,63 @@ private fun drawRouteOnMap(map: GoogleMap, routePoints: List<LatLng>) {
         .width(5f)
     map.addPolyline(polylineOptions)
 
-    // Adjust camera to include all route points
+    // Ajustar la cámara para incluir todos los puntos de la ruta
     val boundsBuilder = LatLngBounds.Builder()
     routePoints.forEach { boundsBuilder.include(it) }
     map.moveCamera(CameraUpdateFactory.newLatLngBounds(boundsBuilder.build(), 100))
 }
 
-// Function to start tracking user's location and calculate direction
+// Función para calcular la distancia total de la ruta
+private fun calculateTotalDistance(routePoints: List<LatLng>): Double {
+    var totalDistance = 0.0
+    for (i in 0 until routePoints.size - 1) {
+        totalDistance += haversineDistance(routePoints[i], routePoints[i + 1])
+    }
+    return totalDistance
+}
+
+// Función para rastrear la ubicación del usuario y actualizar la distancia recorrida
 @SuppressLint("MissingPermission")
 private fun startUserLocationTracking(
     googleMap: GoogleMap,
     fusedLocationClient: FusedLocationProviderClient,
     routePoints: List<LatLng>,
-    onBearingCalculated: (Float) -> Unit
+    onBearingCalculated: (Float) -> Unit,
+    onDistanceUpdated: (Double) -> Unit
 ) {
+    var previousLocation: LatLng? = null
+    var accumulatedDistance = 0.0
+
     fusedLocationClient.requestLocationUpdates(
         LocationRequest.create().apply {
-            interval = 5000 // Update every 5 seconds
+            interval = 5000 // Actualización cada 5 segundos
             priority = LocationRequest.PRIORITY_HIGH_ACCURACY
         },
         object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
                 locationResult.lastLocation?.let { location ->
                     val userLatLng = LatLng(location.latitude, location.longitude)
+
+                    // Calcular distancia desde la última ubicación
+                    previousLocation?.let {
+                        accumulatedDistance += haversineDistance(it, userLatLng)
+                        onDistanceUpdated(accumulatedDistance)
+                    }
+                    previousLocation = userLatLng
+
                     val nextPoint = routePoints.minByOrNull { haversineDistance(userLatLng, it) }
 
-                    // Calculate bearing to the next point
+                    // Calcular el rumbo hacia el siguiente punto
                     nextPoint?.let {
                         val bearing = calculateBearing(userLatLng, it)
                         onBearingCalculated(bearing)
                     }
 
+                    // Añadir marcador de ubicación del usuario
                     googleMap.addMarker(
                         MarkerOptions()
                             .position(userLatLng)
-                            .title("Your Location")
+                            .title("Tu Ubicación")
                             .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
                     )
                 }
@@ -229,7 +280,7 @@ private fun startUserLocationTracking(
     )
 }
 
-// Function to calculate bearing between two LatLng points
+// Función para calcular el rumbo entre dos puntos LatLng
 private fun calculateBearing(start: LatLng, end: LatLng): Float {
     val lat1 = Math.toRadians(start.latitude)
     val lon1 = Math.toRadians(start.longitude)
@@ -241,9 +292,9 @@ private fun calculateBearing(start: LatLng, end: LatLng): Float {
     return ((Math.toDegrees(atan2(y, x)) + 360) % 360).toFloat()
 }
 
-// Haversine distance calculation (for finding nearest point)
+// Función para calcular la distancia Haversine entre dos puntos LatLng en metros
 private fun haversineDistance(start: LatLng, end: LatLng): Double {
-    val earthRadius = 6371e3 // in meters
+    val earthRadius = 6371e3 // en metros
     val dLat = Math.toRadians(end.latitude - start.latitude)
     val dLon = Math.toRadians(end.longitude - start.longitude)
     val lat1 = Math.toRadians(start.latitude)
@@ -254,14 +305,28 @@ private fun haversineDistance(start: LatLng, end: LatLng): Double {
     return earthRadius * c
 }
 
-// MapView lifecycle handling
-@Composable
-fun rememberMapViewWithLifecycle(): MapView {
-    val context = LocalContext.current
-    val mapView = remember { MapView(context).apply { onCreate(Bundle()) } }
-    DisposableEffect(mapView) {
-        mapView.onResume()
-        onDispose { mapView.onPause() }
+// Función para verificar si la distancia recorrida es >= 90% de la distancia total y actualizar Firebase
+private fun checkAndIncrementRoute(
+    walkedDistance: Double,
+    totalRouteDistance: Double,
+    hasIncremented: Boolean
+) {
+    if (!hasIncremented && walkedDistance >= 0.9 * totalRouteDistance) {
+        // Obtener el ID del usuario actual
+        val user = FirebaseAuth.getInstance().currentUser
+        user?.let {
+            val db = FirebaseFirestore.getInstance()
+            val userDocRef = db.collection("usuario").document(it.uid)
+
+            // Incrementar el atributo 'ruta' en 1
+            userDocRef.update("ruta", FieldValue.increment(1))
+                .addOnSuccessListener {
+                    Log.d("RouteDisplay", "Atributo 'ruta' incrementado exitosamente.")
+                }
+                .addOnFailureListener { e ->
+                    Log.e("RouteDisplay", "Error al incrementar el atributo 'ruta'.", e)
+                }
+
+        }
     }
-    return mapView
 }
