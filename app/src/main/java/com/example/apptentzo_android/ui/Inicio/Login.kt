@@ -43,7 +43,7 @@ fun Login(navController: NavController, modifier: Modifier = Modifier) {
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "Vive el Tentzo",
+                text = "OcoFlora",
                 color = Color(0xff7fc297),
                 style = TextStyle(
                     fontSize = 24.sp,
