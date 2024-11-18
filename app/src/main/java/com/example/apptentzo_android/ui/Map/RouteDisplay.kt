@@ -316,10 +316,10 @@ private fun checkAndIncrementRoute(
         val user = FirebaseAuth.getInstance().currentUser
         user?.let {
             val db = FirebaseFirestore.getInstance()
-            val userDocRef = db.collection("usuario").document(it.uid)
+            val userDocRef = db.collection("Usuario").document(it.uid)
 
             // Incrementar el atributo 'ruta' en 1
-            userDocRef.update("ruta", FieldValue.increment(1))
+            userDocRef.update("rutas", FieldValue.increment(1))
                 .addOnSuccessListener {
                     Log.d("RouteDisplay", "Atributo 'ruta' incrementado exitosamente.")
                 }
