@@ -279,7 +279,7 @@ fun identifyPlant(
     onPlantIdentified: (PlantInfo) -> Unit
 ) {
     val client = OkHttpClient()
-    val url = "https://api.plant.id/v3/identify"
+    val url = "https://api.plant.id/v2identify"
 
     // Construir el cuerpo JSON
     val jsonBody = JSONObject().apply {
