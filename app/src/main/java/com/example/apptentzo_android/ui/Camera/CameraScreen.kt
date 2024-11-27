@@ -102,7 +102,7 @@ fun CameraScreen() {
             imageBase64 = plantBase64 ?: "",
             latitude = null,
             longitude = null,
-            apiKey = "0B3G3gYo0gziMjliprpRFc5XVB2EbG9swngse8W4ZbnKOdNUOu", // Reemplaza con tu clave de API
+            apiKey = "BBKK2iPoR2aX2mXk9ZyWUaBYqc42FrRMOyhmbc7EM0qxLYo3Xk", // Reemplaza con tu clave de API
             onPlantIdentified = { info ->
                 plantInfo = info
 
@@ -279,7 +279,7 @@ fun identifyPlant(
     onPlantIdentified: (PlantInfo) -> Unit
 ) {
     val client = OkHttpClient()
-    val url = "https://api.plant.id/v2/identify"
+    val url = "https://api.plant.id/v3/identify"
 
     // Construir el cuerpo JSON
     val jsonBody = JSONObject().apply {
